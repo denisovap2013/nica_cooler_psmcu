@@ -30,3 +30,11 @@
 *.exe
 *.out
 *.app
+
+# CVI files
+cvibuild.*
+*.cws
+*.cdb
+
+# Specific project files
+*LOG/

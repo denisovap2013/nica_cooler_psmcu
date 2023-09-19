@@ -126,17 +126,24 @@ void parseCanGwConnectionStatus(char *);
 
 int main (int argc, char *argv[])
 {
-	#define configFile "PS-MCU client configuration.ini"
-
+	#define defaultConfigFile "PS-MCU client configuration.ini"
+	
     int error = 0;
 	int i;
-	char title[256];
+	char title[256], configFilePath[1024];
 	
 	initLogAndDataFilesNames();
-	
-	
+
 	//// Configuration
-	ConfigurateClient(configFile);
+	switch (argc) {
+	    case 1: strcpy(configFilePath, defaultConfigFile); break;
+		case 2: strcpy(configFilePath, argv[1]); break;
+		default:
+			MessagePopup("Command line arguments error", "Incorrect number of arguments");
+			exit(1);
+	}
+
+	ConfigurateClient(configFilePath);
 	sprintf(SERVER_INDICATOR_ONLINE_LABEL, "Server is Online (%s:%d)", CFG_SERVER_IP, CFG_SERVER_PORT);
 	sprintf(SERVER_INDICATOR_OFFLINE_LABEL, "Server is Offline (%s:%d)", CFG_SERVER_IP, CFG_SERVER_PORT);
 	

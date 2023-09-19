@@ -25,8 +25,6 @@ void initQueue(commands_queue_t *queue) {
 
 
 int addCommandToQueue(commands_queue_t *queue, char * command, int awaitAnswer) {
-	int i;
-	
 	if (isQueueFull(queue)) return 0;
 	
 	strcpy(queue->commands[queue->end], command);

@@ -3,10 +3,13 @@
 #include "psMcuProtocol.h"  
 
 //==============================================================================
-int CFG_PSMCU_DEVICES_NUM;
-int CFG_PSMCU_BLOCKS_IDS[CFG_MAX_PSMCU_DEVICES_NUM];  
-int CFG_PSMCU_DEVICES_IDS[CFG_MAX_PSMCU_DEVICES_NUM];
-char CFG_PSMCU_DEVICES_NAMES[CFG_MAX_PSMCU_DEVICES_NUM][256];
+// Server general parameters
+char    CFG_SERVER_NAME[256];
+
+int     CFG_PSMCU_DEVICES_NUM;
+int     CFG_PSMCU_BLOCKS_IDS[CFG_MAX_PSMCU_DEVICES_NUM];  
+int     CFG_PSMCU_DEVICES_IDS[CFG_MAX_PSMCU_DEVICES_NUM];
+char    CFG_PSMCU_DEVICES_NAMES[CFG_MAX_PSMCU_DEVICES_NUM][256];
 
 // Defaults (static global variables) (maybe move to the function scope?)
 
@@ -51,6 +54,7 @@ int		CFG_FILE_DATA_WRITE_INTERVAL;  // seconds
 int 	CFG_FILE_EXPIRATION;
 
 
+#define GENERAL_SECTION "GENERAL" 
 #define FILE_SECTION "FILE"
 #define TCP_SECTION "TCP"
 #define CANGW_SECTION "CANGW" 
@@ -139,6 +143,10 @@ void InitServerConfig(char * configPath) {
 	}
 
 	////////////////////////////////////////////////////
+	////////////////////////////////////////////////////
+	// GENERAL //
+	READ_STRING(GENERAL_SECTION, "serverName", CFG_SERVER_NAME); 
+
 	////////////////////////////////////////////////////
 	// FILE //
 	READ_STRING(FILE_SECTION, "logDir", CFG_FILE_LOG_DIRECTORY);

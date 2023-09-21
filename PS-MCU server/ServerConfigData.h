@@ -17,6 +17,9 @@
 #define CFG_MAX_PSMCU_DEVICES_NUM 40
 #define CFG_CGW_MAX_NUM 4
 
+// Server general parameters
+extern char     CFG_SERVER_NAME[256];
+
 // CANGW parameters
 extern int      CFG_CANGW_BLOCKS_NUM;
 extern char 	CFG_CANGW_BLOCK_NAME[CFG_CGW_MAX_NUM][256];

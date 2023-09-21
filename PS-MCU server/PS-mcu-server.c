@@ -340,7 +340,7 @@ void register_devices(void) {
 
 int main(int argc, char **argv) {
 	#define defaultConfigFile "PS-MCU server configuration.ini"   
-	char errBuf[512], configFilePath[1024];
+	char errBuf[512], configFilePath[1024], serverName[256];
 	
 	switch (argc) {
 	    case 1: strcpy(configFilePath, defaultConfigFile); break;
@@ -357,8 +357,10 @@ int main(int argc, char **argv) {
 	/////////////////////////////////
 	
 	// Setup the console window
-	//SetSystemAttribute 
+	sprintf(serverName, "Server: %s", CFG_SERVER_NAME);
+	
 	SetStdioWindowOptions(2000, 0, 0);
+	SetSystemAttribute(ATTR_TASKBAR_BUTTON_TEXT, serverName);
 	SetStdioPort(CVI_STDIO_WINDOW);
 	SetStdioWindowVisibility(1);
 	SetSleepPolicy(VAL_SLEEP_NONE);
@@ -375,6 +377,7 @@ int main(int argc, char **argv) {
 	
 	msInitGlobalStack();  // Initialize the global message stack 
 	msAddMsg(msGMS(), "Configuration file: %s", configFilePath);
+	msAddMsg(msGMS(), "Server name: %s", CFG_SERVER_NAME); 
 	msAddMsg(msGMS(), "------------\n[PS-MCU Server -- NEW SESSION]\n------------");   
 	
 	tcpConnection_InitServerInterface(&tcpSI);

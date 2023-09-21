@@ -93,6 +93,7 @@ void InitCommandParsers(void) {
     registerCommandParser(CMD_PRIME_ALL_FORCE_OFF, CMD_ALIAS_ALL_FORCE_OFF, cmdParserAllForceOff);
     registerCommandParser(CMD_PRIME_ALL_PERMISSION_OFF, CMD_ALIAS_ALL_PERMISSION_OFF, cmdParserAllPermissionOff);
     registerCommandParser(CMD_PRIME_CANGW_STATUS_GET, CMD_ALIAS_CANGW_STATUS_GET, cmdParserCangwStatusGet);
+	registerCommandParser(CMD_PRIME_SERVER_NAME_GET, CMD_ALIAS_SERVER_NAME_GET, cmdParserServerNameGet);
 	registerCommandParser(CMD_PRIME_CANGW_DEVICES_NUM_GET, CMD_ALIAS_CANGW_DEVICES_NUM_GET, cmdParserDevicesNumGet);    
 	registerCommandParser(CMD_PRIME_ID_GET, CMD_ALIAS_ID_GET, cmdParserName2IdGet); 
 	
@@ -653,6 +654,12 @@ int cmdParserCangwStatusGet(char *commandBody, char *answerBuffer) {
 		statusAll = statusAll | (statusSingle << cgwIndex);
 	}
 	sprintf(answerBuffer, "%X", statusAll);
+	return 1;
+}
+
+
+int cmdParserServerNameGet(char *commandBody, char *answerBuffer) {
+	strcpy(answerBuffer, CFG_SERVER_NAME);
 	return 1;
 }
 

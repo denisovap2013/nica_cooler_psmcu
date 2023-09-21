@@ -106,6 +106,9 @@
 #define CMD_PRIME_CANGW_STATUS_GET "PSMCU:CANGW:STATUS:GET"
 #define CMD_ALIAS_CANGW_STATUS_GET "IST:CANGW:STATUS:GET"
 		
+#define CMD_PRIME_SERVER_NAME_GET "PSMCU:SERVER:NAME:GET"
+#define CMD_ALIAS_SERVER_NAME_GET "IST:SERVER:NAME:GET"
+		
 #define CMD_PRIME_CANGW_DEVICES_NUM_GET "PSMCU:DEVNUM:GET"
 #define CMD_ALIAS_CANGW_DEVICES_NUM_GET "IST:DEVNUM:GET"
 		
@@ -162,6 +165,7 @@ int cmdParserAllForceOff(char *, char *);
 int cmdParserAllZeroDac(char *, char *);
 int cmdParserAllPermissionOff(char *, char *);	
 int cmdParserCangwStatusGet(char *, char *);
+int cmdParserServerNameGet(char *, char *);
 
 int cmdParserDevicesNumGet(char *, char *);	
 int cmdParserName2IdGet(char *, char *);

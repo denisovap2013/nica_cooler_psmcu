@@ -483,10 +483,15 @@ void UpdateGraphs(void) {
 
 void UpdateDeviceName(int deviceIndex, char *name) {
 	int channelIndex;
+	char windowTitle[256], shortTiltle[256];
+
 	strcpy(PSMCU_DEV_NAME[deviceIndex], name);
-	sprintf(PSMCU_DEV_TITLE[deviceIndex], "%d: %s", deviceIndex + 1, PSMCU_DEV_NAME[deviceIndex]);
-	SetPanelAttribute(psMcuWindowHandles[deviceIndex], ATTR_TITLE, PSMCU_DEV_TITLE[deviceIndex]);
-	SetCtrlAttribute(mainMenuHandle, PSMCU_WINDOW_BUTTONS[deviceIndex], ATTR_LABEL_TEXT, PSMCU_DEV_TITLE[deviceIndex]); 
+	sprintf(shortTiltle, "%d: %s", deviceIndex + 1, PSMCU_DEV_NAME[deviceIndex]);
+	sprintf(PSMCU_DEV_TITLE[deviceIndex], "Device %s", shortTiltle);
+	sprintf(windowTitle, "%s - %s", SERVER_NAME, PSMCU_DEV_TITLE[deviceIndex]); 
+
+	SetPanelAttribute(psMcuWindowHandles[deviceIndex], ATTR_TITLE, windowTitle);
+	SetCtrlAttribute(mainMenuHandle, PSMCU_WINDOW_BUTTONS[deviceIndex], ATTR_LABEL_TEXT, shortTiltle); 
 	for (channelIndex=0; channelIndex < PSMCU_ADC_CHANNELS_NUM; channelIndex++) {
 		UpdateGraphTitle(deviceIndex, channelIndex);	
 	}
@@ -496,7 +501,7 @@ void UpdateDeviceName(int deviceIndex, char *name) {
 void UpdateGraphTitle(int deviceIndex, int channelIndex) {
 	char graphTitle[256];
 	if (PSMCU_GRAPHS_WINDOW_HANDLES[deviceIndex][channelIndex] < 0) return;
-	sprintf(graphTitle, "%s - ADC channel %d: %s", PSMCU_DEV_TITLE[deviceIndex], channelIndex, PSMCU_ADC_LABELS_TEXT[deviceIndex][channelIndex]);
+	sprintf(graphTitle, "%s - %s - ADC channel %d: \"%s\"", SERVER_NAME, PSMCU_DEV_TITLE[deviceIndex], channelIndex, PSMCU_ADC_LABELS_TEXT[deviceIndex][channelIndex]);
 	SetPanelAttribute(PSMCU_GRAPHS_WINDOW_HANDLES[deviceIndex][channelIndex], ATTR_TITLE, graphTitle);
 }
 

@@ -73,7 +73,9 @@ void createInfoFile(void);
 
 void RequestNames(void);
 int parseChannelName(char *src, char *prefix, int expectedDevIndex, int expectedChannel, char *output);
-int parseDeviceName(char *src, char *prefix, int expectedDevIndex, char *output);    
+int parseServerName(char *src, char *prefix, char *output);
+int parseDeviceName(char *src, char *prefix, int expectedDevIndex, char *output);  
+void UpdateServerName(char *name);
 void requestDataFromServer(void);
 void requestCanGwStatus(void);
 void ProcessCommandsQueue(void);
@@ -267,6 +269,30 @@ int parseChannelName(char *src, char *prefix, int expectedDevIndex, int expected
 }
 
 
+int parseServerName(char *src, char *prefix, char *output) {
+	// 1 - success, 0 - failure
+	char *stringPointer;
+
+	if (checkServerAnswer(src) < 0) return 0; 
+	
+	if (strstr(src, prefix) != src) {
+		msAddMsg(msGMS(), "%s Expected the answer to start with \"%s\", but got \"%s\"", TimeStamp(0), prefix, revealEscapeSequences(src));
+		return 0;	
+	}
+	
+	stringPointer = src + strlen(prefix);
+	
+	while (stringPointer[0] == ' ') stringPointer++;	
+	
+	strcpy(output, stringPointer);
+	if ((stringPointer = strstr(output, "\n")) != NULL) {
+		stringPointer[0] = 0;	
+	}
+	
+	return 1;	
+}
+
+
 int parseDeviceName(char *src, char *prefix, int expectedDevIndex, char *output) {
 	// 1 - success, 0 - failure
 	int deviceIndex, readPos;
@@ -310,6 +336,30 @@ void RequestNames(void) {
 	char command[256], name[256];
 	int waitTime;
 	char prefix[256];
+	
+	if (connectionEstablished) {
+		strcpy(prefix, "PSMCU:SERVER:NAME:GET");
+		sprintf(command, "%s\n", prefix);
+
+		ClientTCPWrite(serverHandle, command, strlen(command), 100);
+		waitTime = clock();
+		globalWaitingForAnswer = WAIT_FOR_BLOCK_NAMES;
+		
+		while (globalWaitingForAnswer) {
+			ProcessSystemEvents();
+			if (globalWaitingForAnswer == 0) {
+				if (parseServerName(globalAnswerString, prefix, name))
+					UpdateServerName(name);
+				else
+					UpdateServerName("Unknown");
+				break;
+			}
+			if (clock()- waitTime > CLOCK_WAIT) {
+				UpdateServerName("Unknown"); 
+				break;
+			}
+		}	
+	} else return;
 	
 	
 	for (i=0; i < PSMCU_NUM; i++) {
@@ -456,6 +506,15 @@ void RequestNames(void) {
 			} else return;			
 		}
 	}
+}
+
+
+void UpdateServerName(char *name) {
+	char title[256];
+	strcpy(SERVER_NAME, name);
+	sprintf(title, "Client: %s", SERVER_NAME);
+	SetSystemAttribute(ATTR_TASKBAR_BUTTON_TEXT, title);
+	SetPanelAttribute(mainMenuHandle, ATTR_TITLE, title);
 }
 
 

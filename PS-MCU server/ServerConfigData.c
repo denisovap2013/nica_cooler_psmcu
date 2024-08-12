@@ -29,9 +29,14 @@ int		CFG_PSMCU_DEVICE_PING_INTERVAL;
 int     CFG_PSMCU_REGISTERS_REQUEST_INTERVAL;
 int     CFG_PSMCU_DAC_REQUEST_INTERVAL;
 
+// Slow mode parameters
 int     CFG_PSMCU_DAC_SLOW_TIME_DELTA;
 double  CFG_PSMCU_DAC_SLOW_VOLTAGE_STEP;
 	
+// Safe model parameters
+double  CFG_PSMCU_ADC_MAX_CURRENT[CFG_MAX_PSMCU_DEVICES_NUM];
+double  CFG_PSMCU_ADC_SAFE_CURR_THRESH[CFG_MAX_PSMCU_DEVICES_NUM];
+
 // CANGW parameters
 int     CFG_CANGW_BLOCKS_NUM;
 
@@ -126,16 +131,19 @@ void InitServerConfig(char * configPath) {
 	double 	CFG_PSMCU_DAC_DEFAULT_COEFF[PSMCU_DAC_CHANNELS_NUM][2]; 
 	char 	CFG_PSMCU_INREG_DEFAULT_NAMES[PSMCU_INPUT_REGISTERS_NUM][256];
 	char 	CFG_PSMCU_OUTREG_DEFAULT_NAMES[PSMCU_OUTPUT_REGISTERS_NUM][256];
+	double  cfg_default_adc_max_curr;
+	double  cfg_default_adc_safe_curr;
 	
 	#define INFORM_AND_STOP(msg) MessagePopup("Configuration Error", (msg)); Ini_Dispose(iniText); exit(0);   
 	#define STOP_CONFIGURATION(s, k) sprintf(msg, "Cannot read '%s' from the '%s' section. (Line: %d)", (k), (s), Ini_LineOfLastAccess(iniText)); INFORM_AND_STOP(msg);
     #define READ_STRING(s, k, var) if(Ini_GetStringIntoBuffer(iniText, (s), (k), (var), sizeof((var))) <= 0) {STOP_CONFIGURATION((s), (k));} 
     #define READ_INT(s, k, var) if(Ini_GetInt(iniText, (s), (k), &(var)) <= 0) {STOP_CONFIGURATION((s), (k));}
 	#define READ_DOUBLE(s, k, var) if(Ini_GetDouble(iniText, (s), (k), &(var)) <= 0) {STOP_CONFIGURATION((s), (k));}
+	#define READ_DOUBLE_OR_DEFAULT(s, k, var, default_val) if (Ini_ItemExists(iniText, (s), (k))) { READ_DOUBLE((s), (k), (var)) } else { (var) = (default_val); }
 	#define READ_COEFFICIENTS(s, k, sbuf, c1, c2) if(Ini_GetStringIntoBuffer(iniText, (s), (k), (sbuf), sizeof((sbuf))) <= 0) {STOP_CONFIGURATION((s), (k));} else { if (sscanf((sbuf), "%lf %lf", &(c1), &(c2)) < 2 ) {STOP_CONFIGURATION((s), (k));} }
 	#define READ_COEFFICIENTS_OR_DEFAULT(s, k, sbuf, c1, c2, dc1, dc2) if (Ini_ItemExists(iniText, (s), (k))) { READ_COEFFICIENTS((s), (k), (sbuf), (c1), (c2)) } else { (c1) = (dc1); (c2) = (dc2); }  
 	#define READ_STRING_OR_DEFAULT(s, k, var, default_val) if (Ini_ItemExists(iniText, (s), (k))) { READ_STRING((s), (k), (var)) } else { strcpy((var), (default_val)); }
-	
+
 	iniText = Ini_New(0);
 	if( Ini_ReadFromFile(iniText, configPath) < 0 ) {
 		sprintf(msg, "Unable to read the configuration file '%s'.", configPath);
@@ -236,6 +244,10 @@ void InitServerConfig(char * configPath) {
 	READ_INT(PSMCU_DEFAULTS_SECTION, "default_dac_slow_time_delta", CFG_PSMCU_DAC_SLOW_TIME_DELTA);
 	READ_DOUBLE(PSMCU_DEFAULTS_SECTION, "default_dac_slow_max_voltage_step", CFG_PSMCU_DAC_SLOW_VOLTAGE_STEP);
 	
+	// default safe current threshold (if measured currents exceed that threshold, the server will automatically reset the device currents to zero)
+	READ_DOUBLE(PSMCU_DEFAULTS_SECTION, "default_adc_safe_current_threshold", cfg_default_adc_safe_curr);
+	READ_DOUBLE(PSMCU_DEFAULTS_SECTION, "default_adc_max_allowed_current", cfg_default_adc_max_curr);
+
 	////////////////////////////////////////////////////
 	// PSMCU_SPECIFIC //
 	
@@ -271,6 +283,13 @@ void InitServerConfig(char * configPath) {
 			sprintf(key, "dev_%d_out_reg_ch_%d_name", devIndex, chIndex);
 			READ_STRING_OR_DEFAULT(PSMCU_SPECIFIC_SECTION, key, CFG_PSMCU_OUTREG_NAMES[devIndex][chIndex], CFG_PSMCU_OUTREG_DEFAULT_NAMES[chIndex]);
 		}
+
+		// Safe mode parameters
+		sprintf(key, "dev_%d_adc_safe_current_threshold", devIndex);
+		READ_DOUBLE_OR_DEFAULT(PSMCU_DEFAULTS_SECTION, key, CFG_PSMCU_ADC_SAFE_CURR_THRESH[devIndex], cfg_default_adc_safe_curr);
+
+		sprintf(key, "dev_%d_adc_max_allowed_current", devIndex);
+		READ_DOUBLE_OR_DEFAULT(PSMCU_DEFAULTS_SECTION, key, CFG_PSMCU_ADC_MAX_CURRENT[devIndex], cfg_default_adc_max_curr);
 	}
 	
 	////////////////////////////////////////////////////////

@@ -52,8 +52,13 @@ extern int		CFG_PSMCU_DEVICE_PING_INTERVAL;
 extern int      CFG_PSMCU_REGISTERS_REQUEST_INTERVAL;
 extern int      CFG_PSMCU_DAC_REQUEST_INTERVAL;
 
+// Slow mode parameters
 extern int      CFG_PSMCU_DAC_SLOW_TIME_DELTA;
 extern double   CFG_PSMCU_DAC_SLOW_VOLTAGE_STEP;
+
+// Safe mode parameters
+extern double   CFG_PSMCU_ADC_MAX_CURRENT[CFG_MAX_PSMCU_DEVICES_NUM];
+extern double   CFG_PSMCU_ADC_SAFE_CURR_THRESH[CFG_MAX_PSMCU_DEVICES_NUM];
 
 // TCP/IP parameters
 extern int		CFG_TCP_PORT;

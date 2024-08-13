@@ -192,52 +192,6 @@ void dataExchFunc(unsigned handle, void * arg)
 		strcpy(subcommand, command);
 		strcpy(command, lfp+1);
 		processUserCommand(subcommand, answerBuffer);
-		/*
-		//msAddMsg(msGMS(), "%s [DEBUG] Processing command: \"%s\"", TimeStamp(0), subcommand);
-
-		// Check the entire list of commands starting with the most popular
-		// Frequently used commands (automatic requests from the client)
-		CHECK_COMMAND(CMD_PRIME_SINGLE_FULLINFO, CMD_ALIAS_SINGLE_FULLINFO, cmdParserSingleGetFullInfo);
-		CHECK_COMMAND(CMD_PRIME_CANGW_STATUS_GET, CMD_ALIAS_CANGW_STATUS_GET, cmdParserCangwStatusGet);
-		CHECK_COMMAND(CMD_PRIME_SINGLE_STATUS_GET, CMD_ALIAS_SINGLE_STATUS_GET, cmdParserSingleStatusGet);
-		
-		// Commands initiated by the user (less frequent)
-		CHECK_COMMAND(CMD_PRIME_SINGLE_DAC_SET, CMD_ALIAS_SINGLE_DAC_SET, cmdParserSingleDacSlowSet); 
-		CHECK_COMMAND(CMD_PRIME_SINGLE_OUTREG_SET, CMD_ALIAS_SINGLE_OUTREG_SET, cmdParserSingleOutRegistersSet);
-		
-		CHECK_COMMAND(CMD_PRIME_ALL_ZERO_DAC, CMD_ALIAS_ALL_ZERO_DAC, cmdParserAllZeroDac);
-		CHECK_COMMAND(CMD_PRIME_ALL_FORCE_OFF, CMD_ALIAS_ALL_FORCE_OFF, cmdParserAllForceOff);
-		CHECK_COMMAND(CMD_PRIME_ALL_PERMISSION_OFF, CMD_ALIAS_ALL_PERMISSION_OFF, cmdParserAllPermissionOff);
-		
-		CHECK_COMMAND(CMD_PRIME_SINGLE_INTERLOCK_DROP, CMD_ALIAS_SINGLE_INTERLOCK_DROP, cmdParserSingleInterlockDrop); 
-		CHECK_COMMAND(CMD_PRIME_SINGLE_FORCE_ON, CMD_ALIAS_SINGLE_FORCE_ON, cmdParserSingleForceOn);
-		CHECK_COMMAND(CMD_PRIME_SINGLE_FORCE_OFF, CMD_ALIAS_SINGLE_FORCE_OFF, cmdParserSingleForceOff);
-		CHECK_COMMAND(CMD_PRIME_SINGLE_PERMISSION_ON, CMD_ALIAS_SINGLE_PERMISSION_ON, cmdParserSinglePermissionOn);
-		CHECK_COMMAND(CMD_PRIME_SINGLE_PERMISSION_OFF, CMD_ALIAS_SINGLE_PERMISSION_OFF, cmdParserSinglePermissionOff);
-		
-		// Rarely used commands
-		CHECK_COMMAND(CMD_PRIME_SINGLE_INTERLOCK_RESTORE, CMD_ALIAS_SINGLE_INTERLOCK_RESTORE, cmdParserSingleInterlockRestore); 
-
-		CHECK_COMMAND(CMD_PRIME_SINGLE_DAC_FAST_SET, CMD_ALIAS_SINGLE_DAC_FAST_SET, cmdParserSingleDacSet);
-		CHECK_COMMAND(CMD_PRIME_SINGLE_DAC_RAWSET, CMD_ALIAS_SINGLE_DAC_RAWSET, cmdParserSingleDacSlowRawSet);
-		CHECK_COMMAND(CMD_PRIME_SINGLE_DAC_FAST_RAWSET, CMD_ALIAS_SINGLE_DAC_FAST_RAWSET, cmdParserSingleDacRawSet);
-		CHECK_COMMAND(CMD_PRIME_SINGLE_ADC_GET, CMD_ALIAS_SINGLE_ADC_GET, cmdParserSingleAdcGet);
-		CHECK_COMMAND(CMD_PRIME_SINGLE_ADC_RAWGET, CMD_ALIAS_SINGLE_ADC_RAWGET, cmdParserSingleAdcRawGet);
-		CHECK_COMMAND(CMD_PRIME_SINGLE_ADC_RESET, CMD_ALIAS_SINGLE_ADC_RESET, cmdParserSingleAdcReset);
-		CHECK_COMMAND(CMD_PRIME_SINGLE_ALLREGS_GET, CMD_ALIAS_SINGLE_ALLREGS_GET, cmdParserSingleAllRegistersGet);
-
-		CHECK_COMMAND(CMD_PRIME_SINGLE_DEVNAME_GET, CMD_ALIAS_SINGLE_DEVNAME_GET, cmdParserSingleDeviceNameGet);
-		CHECK_COMMAND(CMD_PRIME_SINGLE_ADCNAME_GET, CMD_ALIAS_SINGLE_ADCNAME_GET, cmdParserSingleAdcNameGet);
-		CHECK_COMMAND(CMD_PRIME_SINGLE_DACNAME_GET, CMD_ALIAS_SINGLE_DACNAME_GET, cmdParserSingleDacNameGet);
-		CHECK_COMMAND(CMD_PRIME_SINGLE_INREGNAME_GET, CMD_ALIAS_SINGLE_INREGNAME_GET, cmdParserSingleInregNameGet);
-		CHECK_COMMAND(CMD_PRIME_SINGLE_OUTREGNAME_GET, CMD_ALIAS_SINGLE_OUTREGNAME_GET, cmdParserSingleOutRegNameGet);
-
-		CHECK_COMMAND(CMD_PRIME_ALL_ADC_RESET, CMD_ALIAS_ALL_ADC_RESET, cmdParserAllAdcReset);
-		
-		// Unknown command
-		msAddMsg(msGMS(), "%s [CLIENT] Unknown command: \"%s\"", TimeStamp(0), subcommand);
-		sprintf(answerBuffer, "?%s\n", subcommand);  */
-
 		if (answerBuffer[0] != 0) ServerTCPWrite(handle, answerBuffer, strlen(answerBuffer) + 1, 0);
 	}
 	

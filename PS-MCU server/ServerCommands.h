@@ -129,8 +129,6 @@ void registerCommandParser(char * command, char *alias, int (*parser)(char *, ch
 parserFunciton getCommandparser(char *command);
 
 void dataExchFunc(unsigned handle,void * arg);
-/*int match_single_command(char *, char *, int(*)(char *, char *), char *);   
-int match_command(char *, char *, char *, int(*)(char *, char *), char *);*/
 
 // Commands parsers (cmdBody, answerBuffer)
 

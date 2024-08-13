@@ -9,6 +9,7 @@
 #include "cangw.h"
 
 #define CGW_DEVICES_NAME_MAX_LENGTH 20
+#define CGW_MAX_ERROR_MSG_LEN 512
 
 extern int cgwDevices_NumberOfPrototypes;
 typedef void (*message_hook_func_t)(cangw_msg_t msg, void * deviceData);
@@ -50,6 +51,10 @@ typedef struct cgw_devices
 	// Flag for ignoring unknown devices on the line
 	int ignore_unregistered;
 	char blockName[256];
+
+	// Error states
+	int error_state[64];
+	char last_error_msg[64][CGW_MAX_ERROR_MSG_LEN];
 } cgw_devices_t;
 
 // Initialization of devices kit

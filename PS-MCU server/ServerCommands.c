@@ -162,9 +162,7 @@ void dataExchFunc(unsigned handle, void * arg)
 	static int byteRecv;
 	static char answerBuffer[1024];
 	static int checkInitialization = 1;
-	
-	//#define CHECK_COMMAND(cmdId, cmdIdAlias, cmdParser) if ( match_command(subcommand, (cmdId), (cmdIdAlias), (cmdParser), answerBuffer) != 0 ) { if (answerBuffer[0] != 0) ServerTCPWrite(handle, answerBuffer, strlen(answerBuffer) + 1, 0); continue; }
-	
+
 	// Check that all necessary initializations are done
 	if (checkInitialization) {
 		if (!parsersInitialized) {
@@ -195,7 +193,7 @@ void dataExchFunc(unsigned handle, void * arg)
 		if (answerBuffer[0] != 0) ServerTCPWrite(handle, answerBuffer, strlen(answerBuffer) + 1, 0);
 	}
 	
-	// It's likely that extriemly long strings are not commands
+	// It's likely that extremly long strings are not commands
 }
 
 
@@ -242,55 +240,6 @@ int processUserCommand(char *userCmd, char *answerBuffer) {
 	
 	return 1;
 }
-
-/*
-int match_single_command(char *incomingCommand, char *commandId, int(*commandParser)(char *cmdBody, char *answerBuf), char *answerBuffer) {
-	// This function tries to find the specified ID in the incomming command and execute the specified parser
-	static char * bufpos;
-	static int result;
-	static char parserAnswer[1024];
-	char symbolAfterHead;
-
-	bufpos = strstr(incomingCommand, commandId); 
-	if (bufpos == NULL) return 0;
-	if (bufpos != incomingCommand) return 0;  // check that htere is no preceeding text
-	symbolAfterHead = incomingCommand[strlen(commandId)];
-	if (symbolAfterHead != ' ' && symbolAfterHead != '\n' && symbolAfterHead != 0) return 0;  // Check that the command is not the part of some other command.
-	
-	answerBuffer[0] = 0;  // Empty string
-	parserAnswer[0] = 0;
-	
-	result = commandParser(bufpos + strlen(commandId), parserAnswer);
-	
-	if (result == 0) return 0;
-	
-	if (result < 0) {
-		sprintf(answerBuffer, "!%s\n", incomingCommand); 
-		return -1;
-	}
-	
-	if (strlen(parserAnswer))
-		sprintf(answerBuffer, "%s %s\n", commandId, parserAnswer);
-
-	return 1;
-}
-
-
-int match_command(char *incomingCommand, char *commandMainId, char *commandAuxId, int(*commandParser)(char *cmdHead, char *cmdBody), char *answerBuffer){
-	// This function tries to find the specified ID or its alias in the incomming command and execute the specified parser 
-	static int parserResult;
-	
-	if (commandMainId != NULL) { 
-		parserResult = match_single_command(incomingCommand, commandMainId, commandParser, answerBuffer);
-		if (parserResult != 0) return parserResult;
-	}
-	
-	if (commandAuxId != NULL) { 
-		return match_single_command(incomingCommand, commandAuxId, commandParser, answerBuffer);
-	}
-	
-	return 0;	
-}	  */
 
 
 //////////////////////////////////

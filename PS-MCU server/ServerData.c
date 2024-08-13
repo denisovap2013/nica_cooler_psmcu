@@ -99,7 +99,7 @@ int getDeviceFullInfo(int cgwIndex, int deviceId, char *formattedInfo) {
 	sprintf(buffer, "%X %X ", deviceParameters->InputRegisterData, deviceParameters->OutputRegisterData);
 	strcat(formattedInfo, buffer);
 	
-	// Alive status
+	// 1st bit - alive status, 2nd bit - error status
 	getDeviceStatus(cgwIndex, deviceId, &status);
 	sprintf(buffer, "%X", status);
 	strcat(formattedInfo, buffer);
@@ -110,8 +110,8 @@ int getDeviceFullInfo(int cgwIndex, int deviceId, char *formattedInfo) {
 
 int getDeviceStatus(int cgwIndex, int deviceId, unsigned int *status) {
 	CHECK_DEVICE_ID(deviceId, deviceKit[cgwIndex]);
-	
-	if (deviceKit[cgwIndex].active[deviceId]) (*status) = 1; else (*status) = 0;
+
+	*status = deviceKit[cgwIndex].active[deviceId] & (deviceKit[cgwIndex].error_state[deviceId] << 1);
 
 	return 0;
 }

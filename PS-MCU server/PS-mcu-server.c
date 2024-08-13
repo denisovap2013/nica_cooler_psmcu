@@ -45,6 +45,7 @@ void deleteOldFiles(int timerHandle, int arg1);
 /////////////////////////////////////////
 
 /////////////////////////////////////////   CONFIGURATION FUNCTIONS 
+int ResolveSuspiciousConig(void);
 void register_devices(void);
 void prepareTimeSchedule(void);    
 
@@ -338,6 +339,39 @@ void register_devices(void) {
 }
 
 
+int ResolveSuspiciousConig(void) {
+    char msg[512];
+	int devIndex;
+	double max_val, min_val, val;
+    #define SUSPICIOUSLY_LOW_CURR_TH 10
+    #define SUSPICIOUSLY_HIGH_CURR_TH 100
+	
+	if (CFG_PSMCU_DEVICES_NUM == 0) return 1; // Nothing to check
+	
+	// Check that the ADC current threshold is not too low.and not too high
+	min_val = 100000;
+	max_val = 0;
+	for (devIndex=0; devIndex < CFG_PSMCU_DEVICES_NUM; devIndex++) {
+		val = CFG_PSMCU_ADC_SAFE_CURR_THRESH[devIndex];
+		
+		if (val > max_val) max_val = val;
+		if (val < min_val) min_val = val;
+	}
+	
+	if (min_val <= SUSPICIOUSLY_LOW_CURR_TH) {
+		sprintf(msg, "Configuration file contains suspiciously low safe current threshold: %.2lf A.\nDo you want to continue?", min_val);
+	    if (!ConfirmPopup("Suspicious parameters", msg)) return 0;	
+	}
+	
+	if (max_val >= SUSPICIOUSLY_HIGH_CURR_TH) {
+		sprintf(msg, "Configuration file contains suspiciously large safe current threshold: %.2lf A.\nDo you want to continue?", max_val);
+	    if (!ConfirmPopup("Suspicious parameters", msg)) return 0;
+	}
+	
+	return 1;
+}
+
+
 int main(int argc, char **argv) {
 	#define defaultConfigFile "PS-MCU server configuration.ini"   
 	char errBuf[512], configFilePath[1024], serverName[256];
@@ -351,6 +385,8 @@ int main(int argc, char **argv) {
 	}
 	
 	InitServerConfig(configFilePath);
+	// Check suspicious config. parameters and ask the user if he wants to continue
+	if (!ResolveSuspiciousConig()) return 0;
 	
 	/////////////////////////////////
 	// Body of the program

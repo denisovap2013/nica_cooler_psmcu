@@ -11,31 +11,44 @@ Server and client applications for the set of power source control units
 
 ## Server commands
 
-* `PSMCU:SINGLE:FULLINFO [deviceIndex]`
-* `PSMCU:SINGLE:DAC:SET [deviceIndex] [dacChannel] [value]`
-* `PSMCU:SINGLE:DAC:RAWSET [deviceIndex] [dacChannel] [voltage]`
-* `PSMCU:SINGLE:ADC:GET [deviceIndex] [channel]`
-* `PSMCU:SINGLE:ADC:RAWGET [deviceIndex] [channel]`
-* `PSMCU:SINGLE:ADC:RESET [deviceIndex]`
-* `PSMCU:SINGLE:ALLREGS:GET [deviceIndex]`
-* `PSMCU:SINGLE:OUTREGS:SET [deviceIndex] [val] [mask]`
-* `PSMCU:SINGLE:INTERLOCK:DROP [deviceIndex]`
-* `PSMCU:SINGLE:INTERLOCK:RESTORE [deviceIndex]`
-* `PSMCU:SINGLE:FORCE:ON [deviceIndex]`
-* `PSMCU:SINGLE:FORCE:OFF [deviceIndex]`
-* `PSMCU:SINGLE:PERMISSION:ON [deviceIndex]`
-* `PSMCU:SINGLE:PERMISSION:OFF [deviceIndex]`
-* `PSMCU:SINGLE:STATUS:GET [deviceIndex]`
-* `PSMCU:SINGLE:DEVNAME:GET [deviceIndex]`
-* `PSMCU:SINGLE:ADCNAME:GET [deviceIndex] [adcChannel]`
-* `PSMCU:SINGLE:DACNAME:GET [deviceIndex] [dacChannel]`
-* `PSMCU:SINGLE:INREGNAME:GET [deviceIndex] [inRegChannel]`
-* `PSMCU:SINGLE:OUTREGNAME:GET [deviceIndex] [outRegChannel]`
-* `PSMCU:ALL:ADC:RESET`
-* `PSMCU:ALL:INTERLOCK:DROP`
-* `PSMCU:ALL:INTERLOCK:RESTORE`
-* `PSMCU:ALL:FORCE:ON`
-* `PSMCU:ALL:FORCE:OFF`
-* `PSMCU:ALL:PERMISSION:ON`
-* `PSMCU:ALL:PERMISSION:OFF`
-* `PSMCU:CANGW:STATUS:GET`
+<details>
+<summary><code>PSMCU:SINGLE:FULLINFO [deviceIndex]</code></summary>
+Provides the information aboud the device.
+
+The answer has the following form:
+`PSMCU:SINGLE:FULLINFO [deviceIndex] [adc_ch_0] .. [adc_ch_4] [dac_ch_0] [input_registers_hex] [output_registers_hex] [status_hex]`
+
+* `[adc_ch_k]` - measurements from the k-th ADC channel
+* `[dac_ch_0]` - the setup DAC value.
+* `[input_registers_hex]` - the state of the input registers
+* `[output_registers_hex]` - the state of the output registers
+* `[status_hex]` - the status of the device. 1st bit - alive status, 2nd bit - error status.
+</details>
+
+<details><summary><code>PSMCU:SINGLE:DAC:SET [deviceIndex] [dacChannel] [value]</code></summary></details>
+<details><summary><code>PSMCU:SINGLE:DAC:RAWSET [deviceIndex] [dacChannel] [voltage]</code></summary></details>
+<details><summary><code>PSMCU:SINGLE:ADC:GET [deviceIndex] [channel]</code></summary></details>
+<details><summary><code>PSMCU:SINGLE:ADC:RAWGET [deviceIndex] [channel]</code></summary></details>
+<details><summary><code>PSMCU:SINGLE:ADC:RESET [deviceIndex]</code></summary></details>
+<details><summary><code>PSMCU:SINGLE:ALLREGS:GET [deviceIndex]</code></summary></details>
+<details><summary><code>PSMCU:SINGLE:OUTREGS:SET [deviceIndex] [val] [mask]</code></summary></details>
+<details><summary><code>PSMCU:SINGLE:INTERLOCK:DROP [deviceIndex]</code></summary></details>
+<details><summary><code>PSMCU:SINGLE:INTERLOCK:RESTORE [deviceIndex]</code></summary></details>
+<details><summary><code>PSMCU:SINGLE:FORCE:ON [deviceIndex]</code></summary></details>
+<details><summary><code>PSMCU:SINGLE:FORCE:OFF [deviceIndex]</code></summary></details>
+<details><summary><code>PSMCU:SINGLE:PERMISSION:ON [deviceIndex]</code></summary></details>
+<details><summary><code>PSMCU:SINGLE:PERMISSION:OFF [deviceIndex]</code></summary></details>
+<details><summary><code>PSMCU:SINGLE:STATUS:GET [deviceIndex]</code></summary></details>
+<details><summary><code>PSMCU:SINGLE:DEVNAME:GET [deviceIndex]</code></summary></details>
+<details><summary><code>PSMCU:SINGLE:ADCNAME:GET [deviceIndex] [adcChannel]</code></summary></details>
+<details><summary><code>PSMCU:SINGLE:DACNAME:GET [deviceIndex] [dacChannel]</code></summary></details>
+<details><summary><code>PSMCU:SINGLE:INREGNAME:GET [deviceIndex] [inRegChannel]</code></summary></details>
+<details><summary><code>PSMCU:SINGLE:OUTREGNAME:GET [deviceIndex] [outRegChannel]</code></summary></details>
+<details><summary><code>PSMCU:ALL:ADC:RESET</code></summary></details>
+<details><summary><code>PSMCU:ALL:INTERLOCK:DROP</code></summary></details>
+<details><summary><code>PSMCU:ALL:INTERLOCK:RESTORE</code></summary></details>
+<details><summary><code>PSMCU:ALL:FORCE:ON</code></summary></details>
+<details><summary><code>PSMCU:ALL:FORCE:OFF</code></summary></details>
+<details><summary><code>PSMCU:ALL:PERMISSION:ON</code></summary></details>
+<details><summary><code>PSMCU:ALL:PERMISSION:OFF</code></summary></details>
+<details><summary><code>PSMCU:CANGW:STATUS:GET</code></summary></details>

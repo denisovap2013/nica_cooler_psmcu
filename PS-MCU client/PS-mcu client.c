@@ -729,6 +729,7 @@ void parseFullInfo(char *serverAnswer) {
 	char *answer_p;
 	int deviceIndex;
 	int p_shift, chIndex;
+	int deviceState;
 	
 	answer_p = serverAnswer;
 	
@@ -795,11 +796,16 @@ void parseFullInfo(char *serverAnswer) {
 
 	answer_p += p_shift;  
 	
-	// Alive status
-	if (1 != sscanf(answer_p, "%X", &PSMCU_ALIVE_STATUS[deviceIndex])) {
+	// Parse device state (1st bit - alive status, 2nd bit - error status)
+	if (1 != sscanf(answer_p, "%X", &deviceState)) {
 		msAddMsg(msGMS(), "%s Unable to read the alive status. Server answer body: \"%s\"", TimeStamp(0), serverAnswer);
 		return;
 	}
+	
+	// Alive status 
+	PSMCU_ALIVE_STATUS[deviceIndex] = deviceState & 1;
+	PSMCU_ERROR_STATUS[deviceIndex] = (deviceState >> 1) & 1;
+	
 	SetCtrlVal(mainMenuHandle, PSMCU_STATUS_INDICATOR[deviceIndex], PSMCU_ALIVE_STATUS[deviceIndex]);
 }
 

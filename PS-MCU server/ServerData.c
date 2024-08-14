@@ -92,7 +92,7 @@ int getDeviceFullInfo(int cgwIndex, int deviceId, char *formattedInfo) {
 		}
 	
 		sprintf(buffer, "%.8lf ", doubleBuffer);
-		strcat(formattedInfo, buffer);
+		strcat(formattedInfo, buffer);  // Append the string to the formatted info
 	}
 	
 	// Input and output registers

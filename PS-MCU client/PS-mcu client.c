@@ -158,6 +158,8 @@ int main (int argc, char *argv[])
     /* initialize and load resources */
     nullChk (InitCVIRTE (0, argv, 0));
     errChk (mainMenuHandle = LoadPanel (0, "PS-mcu client.uir", BlockMenu));
+	SetCtrlAttribute(mainMenuHandle, BlockMenu_TIMER, ATTR_INTERVAL, TIMER_TICK_TIME);
+
 	// ADC blocks
 	for (i=0; i < PSMCU_NUM; i++) {
 		errChk (psMcuWindowHandles[i] = LoadPanel (0, "PS-mcu client.uir", psMcuPanel));
@@ -729,7 +731,7 @@ void parseFullInfo(char *serverAnswer) {
 	char *answer_p;
 	int deviceIndex;
 	int p_shift, chIndex;
-	int deviceState;
+	int deviceState, errorStatus;
 	
 	answer_p = serverAnswer;
 	
@@ -804,7 +806,14 @@ void parseFullInfo(char *serverAnswer) {
 	
 	// Alive status 
 	PSMCU_ALIVE_STATUS[deviceIndex] = deviceState & 1;
-	PSMCU_ERROR_STATUS[deviceIndex] = (deviceState >> 1) & 1;
+	errorStatus = (deviceState >> 1) & 1;
+	
+	if (PSMCU_ERROR_STATUS[deviceIndex] != errorStatus) {
+	    // State changed
+		PSMCU_ERROR_STATUS[deviceIndex] = errorStatus;
+		SetCtrlAttribute(mainMenuHandle, PSMCU_BLOCK_ERROR_STATUS_BOX[deviceIndex], ATTR_VISIBLE, errorStatus);
+		SetCtrlVal(psMcuWindowHandles[deviceIndex], PSMCU_BLOCK_ERROR_STATE_LED[deviceIndex], errorStatus);
+	}
 	
 	SetCtrlVal(mainMenuHandle, PSMCU_STATUS_INDICATOR[deviceIndex], PSMCU_ALIVE_STATUS[deviceIndex]);
 }
@@ -1130,6 +1139,10 @@ int CVICALLBACK zeroSingleFastBtnCallback (int panel, int control, int event, vo
 int CVICALLBACK tick (int panel, int control, int event,
 		void *callbackData, int eventData1, int eventData2)
 {
+	static int flash_count = 0;
+	static int flash_state = 0;
+	int deviceIndex;
+
 	switch (event)
 	{
 		case EVENT_TIMER_TICK:
@@ -1192,6 +1205,22 @@ int CVICALLBACK tick (int panel, int control, int event,
 				WriteLogFiles(msGMS(), CFG_LOG_DIRECTORY, logFileName);
 				msFlushMsgs(msGMS());
 			}
+			
+			// Process timer based GUI update
+			// Display errors box 
+			flash_count++;
+			if (flash_count * TIMER_TICK_TIME > 0.5) {
+				flash_count = 0;
+				flash_state = 1 - flash_state;
+				
+				for (deviceIndex=0; deviceIndex < PSMCU_NUM; deviceIndex++) {
+					if (PSMCU_ERROR_STATUS[deviceIndex]) {
+				    	SetCtrlAttribute(mainMenuHandle, PSMCU_BLOCK_ERROR_STATUS_BOX[deviceIndex], ATTR_VISIBLE, flash_state);
+						SetCtrlVal(psMcuWindowHandles[deviceIndex], PSMCU_BLOCK_ERROR_STATE_LED[deviceIndex], flash_state);
+					}
+				}
+			}
+			
 			break;
 	}
 	return 0;

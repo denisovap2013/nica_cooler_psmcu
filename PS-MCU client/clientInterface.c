@@ -34,6 +34,8 @@ int PSMCU_WINDOW_FIELDS_CAPTION;
 int PSMCU_ORDER_LABELS[PSMCU_MAX_NUM];
 int PSMCU_PIPELINE_STOP_BTN;
 
+int PSMCU_BLOCK_ERROR_STATUS_BOX[PSMCU_MAX_NUM];
+
 // Specific Interface elements for each power supply  
 int PSMCU_ADC_GRAPH_BUTTONS[PSMCU_MAX_NUM][PSMCU_ADC_CHANNELS_NUM];
 
@@ -51,6 +53,7 @@ int PSMCU_BLOCK_INTERLOCK_RESET_BTNS[PSMCU_MAX_NUM];
 int PSMCU_BLOCK_CURRENT_PERM_BTNS[PSMCU_MAX_NUM][2]; 
 int PSMCU_BLOCK_FORCE_BTNS[PSMCU_MAX_NUM][2];
 int PSMCU_BLOCK_ZERO_FAST_BTN[PSMCU_MAX_NUM];
+int PSMCU_BLOCK_ERROR_STATE_LED[PSMCU_MAX_NUM];
 
 int PSMCU_GRAPHS_WINDOW_HANDLES[PSMCU_MAX_NUM][PSMCU_ADC_CHANNELS_NUM];
 
@@ -211,6 +214,18 @@ void setupSinglePsMcuGui(int psMcuIndex) {
 		SetCtrlAttribute(psMcuWindowHandles[i], PSMCU_BLOCK_INREG_INDICATORS[i][j], ATTR_LABEL_LEFT, left + 25);
 		top += ADC_BUTTON_HEIGHT + ADC_ELEMENTS_STEP;
 	}
+	
+	
+    PSMCU_BLOCK_ERROR_STATE_LED[i] = NewCtrl(psMcuWindowHandles[i], CTRL_SQUARE_LED_LS, "Error!", top, left);
+	SetCtrlAttribute(psMcuWindowHandles[i], PSMCU_BLOCK_ERROR_STATE_LED[i], ATTR_OFF_COLOR, VAL_GRAY);
+	SetCtrlAttribute(psMcuWindowHandles[i], PSMCU_BLOCK_ERROR_STATE_LED[i], ATTR_ON_COLOR, VAL_RED);
+	SetCtrlAttribute(psMcuWindowHandles[i], PSMCU_BLOCK_ERROR_STATE_LED[i], ATTR_WIDTH, 20);  
+	SetCtrlAttribute(psMcuWindowHandles[i], PSMCU_BLOCK_ERROR_STATE_LED[i], ATTR_HEIGHT, 20);
+	SetCtrlAttribute(psMcuWindowHandles[i], PSMCU_BLOCK_ERROR_STATE_LED[i], ATTR_LABEL_TOP, top + 3);  
+	SetCtrlAttribute(psMcuWindowHandles[i], PSMCU_BLOCK_ERROR_STATE_LED[i], ATTR_LABEL_LEFT, left + 25);
+																							 
+	
+	if (top + 5 > maxHeight) maxHeight = top + 5;
 
 	// Set the final window size
 	SetPanelAttribute(psMcuWindowHandles[i], ATTR_HEIGHT, maxHeight);
@@ -361,6 +376,14 @@ void initGui(void) {
 		
 		left += 85 + 5; 
 		
+		// Bar for indicating the error status of the device
+		PSMCU_BLOCK_ERROR_STATUS_BOX[i] = NewCtrl(mainMenuHandle, CTRL_RAISED_BOX, 0, top-1 - 1, 0);
+		SetCtrlAttribute(mainMenuHandle, PSMCU_BLOCK_ERROR_STATUS_BOX[i], ATTR_HEIGHT, ADC_BUTTON_HEIGHT + 2 + 2);
+		SetCtrlAttribute(mainMenuHandle, PSMCU_BLOCK_ERROR_STATUS_BOX[i], ATTR_WIDTH, left);
+		SetCtrlAttribute(mainMenuHandle, PSMCU_BLOCK_ERROR_STATUS_BOX[i], ATTR_FRAME_COLOR, MakeColor(255, 150, 150));
+		SetCtrlAttribute(mainMenuHandle, PSMCU_BLOCK_ERROR_STATUS_BOX[i], ATTR_ZPLANE_POSITION, 1000+i);
+		SetCtrlAttribute(mainMenuHandle, PSMCU_BLOCK_ERROR_STATUS_BOX[i], ATTR_VISIBLE, 0);
+		
 		// End of the main controls of a singel block (in the Main window)
 		
 		top += BLOCK_BUTTON_HEIGHT + 2;
@@ -403,7 +426,7 @@ void initGui(void) {
 	}
 	
 	for (i=0; i < 2; i++) {
-		elementHandle = NewCtrl(mainMenuHandle, CTRL_SQUARE_COMMAND_BUTTON_LS, (i == 0) ? "Smart All Zero DAC (dbl click)" : "Fast All Zero DAC (dbl click)", top + (i + 1) * (BLOCK_BUTTON_HEIGHT + 2), 5); 
+		elementHandle = NewCtrl(mainMenuHandle, CTRL_SQUARE_COMMAND_BUTTON_LS, (i == 0) ? "Zero all DAC :: auto (dbl click)" : "Zero all DAC :: fast (dbl click)", top + (i + 1) * (BLOCK_BUTTON_HEIGHT + 2), 5); 
 		SetCtrlAttribute(mainMenuHandle, elementHandle, ATTR_HEIGHT, BLOCK_BUTTON_HEIGHT);
 		SetCtrlAttribute(mainMenuHandle, elementHandle, ATTR_WIDTH, (CMD_BTN_WIDTH + 2) * 3 - 2); 
 		SetCtrlAttribute(mainMenuHandle, elementHandle, ATTR_CMD_BUTTON_COLOR, (i == 0) ? MakeColor(200,200,200) : MakeColor(206,157,230));

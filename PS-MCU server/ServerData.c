@@ -289,6 +289,8 @@ int setAllDacToZero(int cgwIndex) {
 int controlSingleForceOn(int cgwIndex, int deviceId) {
 	// Check the Current Permission is set to 0
 	cgwPsMcu_Information_t *parameters;
+	
+	CHECK_DEVICE_ID(deviceId, deviceKit[cgwIndex]);
 
 	parameters = deviceKit[cgwIndex].parameters[deviceId];
 	
@@ -308,6 +310,8 @@ int controlSingleForceOff(int cgwIndex, int deviceId) {
 int controlSinglePermissionOn(int cgwIndex, int deviceId) {
 	// Check the Contactor input bit is set to 1 and the DAC voltage is set to 0 (0x8000).
 	cgwPsMcu_Information_t *parameters;
+	
+	CHECK_DEVICE_ID(deviceId, deviceKit[cgwIndex]);
 
 	parameters = deviceKit[cgwIndex].parameters[deviceId];
 	
@@ -328,7 +332,8 @@ int controlSinglePermissionOn(int cgwIndex, int deviceId) {
 
 
 int controlSinglePermissionOff(int cgwIndex, int deviceId) {
-	// No bits check is necessary  
+	// No bits check is necessary 
+	CHECK_DEVICE_ID(deviceId, deviceKit[cgwIndex]);
 	return controlSingleSetSingleOutputBit(cgwIndex, deviceId, 1, 0);	
 }
 
@@ -337,6 +342,8 @@ int controlSingleInterlockDrop(int cgwIndex, int deviceId) {
 	// Check Current and Force permissions are set to 0
 	cgwPsMcu_Information_t *parameters;
 
+	CHECK_DEVICE_ID(deviceId, deviceKit[cgwIndex]);
+	
 	parameters = deviceKit[cgwIndex].parameters[deviceId];
 	
 	// If the Current permission is ON, unable to reset the Interlock
@@ -350,6 +357,7 @@ int controlSingleInterlockDrop(int cgwIndex, int deviceId) {
 
 int controlSingleInterlockRestore(int cgwIndex, int deviceId) {
 	// No bits check is necessary
+	CHECK_DEVICE_ID(deviceId, deviceKit[cgwIndex]);
 	return controlSingleSetSingleOutputBit(cgwIndex, deviceId, 0, 0);	
 }
 
@@ -386,4 +394,57 @@ int getCanGwStatus(int cgwIndex, int *status) {
 	else
 		(*status) = 1;
 	return 0;
+}
+
+// Error state management
+int setSingleErrorState(int cgwIndex, int deviceId, char *message) {
+
+	CHECK_DEVICE_ID(deviceId, deviceKit[cgwIndex]);
+	
+	deviceKit[cgwIndex].error_state[deviceId] = 1;
+	strcpy(deviceKit[cgwIndex].last_error_msg[deviceId], message);
+
+	return 0;	
+}
+
+int getSingleErrorStateMessage(int cgwIndex, int deviceId, char *buffer) {
+	
+	CHECK_DEVICE_ID(deviceId, deviceKit[cgwIndex]);
+	strcpy(buffer, deviceKit[cgwIndex].last_error_msg[deviceId]);
+	
+	return 0;	
+}
+
+int clearSingleErrorState(int cgwIndex, int deviceId) {
+	
+	CHECK_DEVICE_ID(deviceId, deviceKit[cgwIndex]);
+	
+	deviceKit[cgwIndex].error_state[deviceId] = 0;
+
+	return 0;	
+}
+
+int setAllErrorState(int cgwIndex, char *message) {
+	int deviceIndex, deviceId;
+	
+	for (deviceIndex=0; deviceIndex < deviceKit[cgwIndex].registeredNum; deviceIndex++) {
+		deviceId = deviceKit[cgwIndex].registeredIDs[deviceIndex];
+		deviceKit[cgwIndex].error_state[deviceId] = 1;
+		strcpy(deviceKit[cgwIndex].last_error_msg[deviceId], message);  // clear error message
+	}
+	
+	return 0;	
+}
+
+int clearAllErrorState(int cgwIndex) {
+
+	int deviceIndex, deviceId;
+	
+	for (deviceIndex=0; deviceIndex < deviceKit[cgwIndex].registeredNum; deviceIndex++) {
+		deviceId = deviceKit[cgwIndex].registeredIDs[deviceIndex];
+		deviceKit[cgwIndex].error_state[deviceId] = 0;
+		deviceKit[cgwIndex].last_error_msg[deviceId][0] = 0;  // clear error message
+	}
+	
+	return 0;	
 }

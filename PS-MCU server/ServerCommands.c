@@ -97,6 +97,13 @@ void InitCommandParsers(void) {
 	registerCommandParser(CMD_PRIME_CANGW_DEVICES_NUM_GET, CMD_ALIAS_CANGW_DEVICES_NUM_GET, cmdParserDevicesNumGet);    
 	registerCommandParser(CMD_PRIME_ID_GET, CMD_ALIAS_ID_GET, cmdParserName2IdGet); 
 	
+	// Register error state commnds
+	registerCommandParser(CMD_PRIME_SINGLE_ERR_SET, CMD_ALIAS_SINGLE_ERR_SET, cmdParserSingleErrorSet);
+	registerCommandParser(CMD_PRIME_SINGLE_ERR_CLEAR, CMD_ALIAS_SINGLE_ERR_CLEAR, cmdParserSingleErrorGet);
+	registerCommandParser(CMD_PRIME_SINGLE_ERR_GET, CMD_ALIAS_SINGLE_ERR_GET, cmdParserSingleErrorClear);
+	registerCommandParser(CMD_PRIME_ALL_ERR_SET, CMD_ALIAS_ALL_ERR_SET, cmdParserAllErrorSet);
+	registerCommandParser(CMD_PRIME_ALL_ERR_CLEAR, CMD_ALIAS_ALL_ERR_CLEAR, cmdParserAllErrorClear);
+	
 	// Prepare the devices names dicitonary
 	for (globalDeviceIndex=0; globalDeviceIndex < CFG_PSMCU_DEVICES_NUM; globalDeviceIndex++) {
 		strcpy(devName, CFG_PSMCU_DEVICES_NAMES[globalDeviceIndex]);
@@ -217,7 +224,7 @@ int processUserCommand(char *userCmd, char *answerBuffer) {
 	
 	parser = getCommandparser(cmdName);
 	
-	answerBuffer[0] = 0;  // Empty string
+	answerBuffer[0] = 0;  // Empty string (no answer)
 	parserAnswer[0] = 0;
 	
 	if (parser) {
@@ -227,7 +234,7 @@ int processUserCommand(char *userCmd, char *answerBuffer) {
 		
 		if (result < 0) {
 			sprintf(answerBuffer, "!%s\n", userCmd); 
-			return -1;
+			return -1; // Error occurred
 		}
 
 		if (strlen(parserAnswer))
@@ -238,7 +245,7 @@ int processUserCommand(char *userCmd, char *answerBuffer) {
 		sprintf(answerBuffer, "?%s\n", userCmd);	
 	}
 	
-	return 1;
+	return 1; // Command processed successfully (including "unknown" commands)
 }
 
 
@@ -586,5 +593,74 @@ int cmdParserName2IdGet(char *commandBody, char *answerBuffer) {
 	if (!devIndex) return -1;
 
 	sprintf(answerBuffer, "%d", *devIndex);
+	return 1;
+}
+
+
+int cmdParserSingleErrorSet(char *commandBody, char *answerBuffer) {
+	int deviceIndex, cgwIndex, deviceId, cursor;
+	char *message_ptr;
+	
+	if (sscanf(commandBody, "%d%n", &deviceIndex, &cursor) != 1) return -1;
+	if (deviceIndexToDeviceId(deviceIndex, &cgwIndex, &deviceId) < 0) return -1;
+	
+	message_ptr = commandBody + cursor;
+	while ((message_ptr[0] == ' ') || (message_ptr[0] == '\t')) message_ptr++;  // skip leading blank spaces 
+
+	if (setSingleErrorState(cgwIndex, deviceId, message_ptr) < 0) return -1;
+	
+	return 1;
+	
+}
+
+int cmdParserSingleErrorGet(char *commandBody, char *answerBuffer) {
+	
+	int deviceIndex, cgwIndex, deviceId;
+	char * msg_buffer_ptr;
+	
+	if (sscanf(commandBody, "%d", &deviceIndex) != 1) return -1;
+	if (deviceIndexToDeviceId(deviceIndex, &cgwIndex, &deviceId) < 0) return -1;
+
+	sprintf(answerBuffer, "%d ", deviceIndex);
+	msg_buffer_ptr = answerBuffer + strlen(answerBuffer);
+	
+	if (getSingleErrorStateMessage(cgwIndex, deviceId, msg_buffer_ptr) < 0) return -1;
+	
+    return 1;	
+}
+
+int cmdParserSingleErrorClear(char *commandBody, char *answerBuffer) {
+	
+	int deviceIndex, cgwIndex, deviceId;
+	
+	if (sscanf(commandBody, "%d", &deviceIndex) != 1) return -1;
+	if (deviceIndexToDeviceId(deviceIndex, &cgwIndex, &deviceId) < 0) return -1;
+
+	if (clearSingleErrorState(cgwIndex, deviceId) < 0) return -1;
+	
+    return 1;	
+}
+
+int cmdParserAllErrorSet(char *commandBody, char *answerBuffer) {
+	
+	int cgwIndex;
+	char *message_ptr;
+	
+	message_ptr = commandBody;
+	while ((message_ptr[0] == ' ') || (message_ptr[0] == '\t')) message_ptr++;  // skip leading blank spaces
+	
+	for (cgwIndex=0; cgwIndex < CFG_CANGW_BLOCKS_NUM; cgwIndex++) {
+		if (setAllErrorState(cgwIndex, message_ptr) < 0) return -1;  
+	}
+
+    return 1;	
+}
+
+int cmdParserAllErrorClear(char *commandBody, char *answerBuffer) {
+	
+	int cgwIndex;
+	for (cgwIndex=0; cgwIndex < CFG_CANGW_BLOCKS_NUM; cgwIndex++) {
+		if (clearAllErrorState(cgwIndex) < 0) return -1;  
+	}
 	return 1;
 }

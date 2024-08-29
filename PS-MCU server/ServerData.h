@@ -74,6 +74,13 @@ int controlAllPermissionOff(int cgwIndex);
 
 int getCanGwStatus(int cgwIndex, int *status);
 
+// Error state management
+int setSingleErrorState(int cgwIndex, int deviceId, char *message);
+int getSingleErrorStateMessage(int cgwIndex, int deviceId, char *buffer);
+int clearSingleErrorState(int cgwIndex, int deviceId);
+
+int setAllErrorState(int cgwIndex, char *message);
+int clearAllErrorState(int cgwIndex);
 
 #ifdef __cplusplus
     }

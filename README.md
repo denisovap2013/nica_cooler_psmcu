@@ -7,9 +7,9 @@ Server and client applications for the set of power source control units
 * Windows 10
 * cangw.lib, cangw.dll (hosted by BINP, Russia)
 
-`cangw.lib` and `cangw.dll` files must be placed into the folder `PS-MCU server`.
-
 ## Server commands
+
+### Data acquisition and registers control
 
 <details>
 <summary><code>PSMCU:SINGLE:FULLINFO [deviceIndex]</code></summary>
@@ -23,6 +23,8 @@ The answer has the following form:
 * `[input_registers_hex]` - the state of the input registers
 * `[output_registers_hex]` - the state of the output registers
 * `[status_hex]` - the status of the device. 1st bit - alive status, 2nd bit - error status.
+
+> Returned values from the DAC and ADC channels are not raw but processed with the linear transformation a*x+b, defined in the server's configuration file.
 </details>
 
 <details><summary><code>PSMCU:SINGLE:DAC:SET [deviceIndex] [dacChannel] [value]</code></summary></details>
@@ -51,4 +53,17 @@ The answer has the following form:
 <details><summary><code>PSMCU:ALL:FORCE:OFF</code></summary></details>
 <details><summary><code>PSMCU:ALL:PERMISSION:ON</code></summary></details>
 <details><summary><code>PSMCU:ALL:PERMISSION:OFF</code></summary></details>
+
+### Server data acquisition
 <details><summary><code>PSMCU:CANGW:STATUS:GET</code></summary></details>
+<details><summary><code>PSMCU:SERVER:NAME:GET</code></summary></details>
+<details><summary><code>PSMCU:DEVNUM:GET</code></summary></details>
+<details><summary><code>PSMCU:NAME2ID:GET</code></summary></details>
+
+### Error status control
+
+<details><summary><code>PSMCU:SINGLE:ERROR:SET [deviceIndex] [message]</code></summary></details>
+<details><summary><code>PSMCU:SINGLE:ERROR:CLEAR [deviceIndex]</code></summary></details>
+<details><summary><code>PSMCU:SINGLE:ERROR:GET [deviceIndex]</code></summary></details>
+<details><summary><code>PSMCU:ALL:ERROR:SET [message]</code></summary></details>
+<details><summary><code>PSMCU:ALL:ERROR:CLEAR</code></summary></details>

@@ -103,6 +103,7 @@
 #define CMD_PRIME_ALL_PERMISSION_OFF "PSMCU:ALL:PERMISSION:OFF"
 #define CMD_ALIAS_ALL_PERMISSION_OFF "IST:ALL:PERMISSION:OFF"
 
+// Server data aquisition
 #define CMD_PRIME_CANGW_STATUS_GET "PSMCU:CANGW:STATUS:GET"
 #define CMD_ALIAS_CANGW_STATUS_GET "IST:CANGW:STATUS:GET"
 		
@@ -115,6 +116,21 @@
 #define CMD_PRIME_ID_GET "PSMCU:NAME2ID:GET"
 #define CMD_ALIAS_ID_GET "IST:NAME2ID:GET"
 
+// Error status commands
+#define CMD_PRIME_SINGLE_ERR_SET "PSMCU:SINGLE:ERROR:SET"
+#define CMD_ALIAS_SINGLE_ERR_SET "IST:SINGLE:ERROR:SET"
+
+#define CMD_PRIME_SINGLE_ERR_CLEAR "PSMCU:SINGLE:ERROR:CLEAR"
+#define CMD_ALIAS_SINGLE_ERR_CLEAR "IST:SINGLE:ERROR:CLEAR"
+
+#define CMD_PRIME_SINGLE_ERR_GET "PSMCU:SINGLE:ERROR:GET"
+#define CMD_ALIAS_SINGLE_ERR_GET "IST:SINGLE:ERROR:GET"
+
+#define CMD_PRIME_ALL_ERR_SET "PSMCU:ALL:ERROR:SET"
+#define CMD_ALIAS_ALL_ERR_SET "IST:ALL:ERROR:SET"
+
+#define CMD_PRIME_ALL_ERR_CLEAR "PSMCU:ALL:ERROR:CLEAR"
+#define CMD_ALIAS_ALL_ERR_CLEAR "IST:ALL:ERROR:CLEAR"
 //==============================================================================
 // Types
 typedef int (*parserFunciton)(char *, char *);
@@ -167,6 +183,13 @@ int cmdParserServerNameGet(char *, char *);
 
 int cmdParserDevicesNumGet(char *, char *);	
 int cmdParserName2IdGet(char *, char *);
+
+// Commapnds parsers for error status
+int cmdParserSingleErrorSet(char *, char *);
+int cmdParserSingleErrorGet(char *, char *);
+int cmdParserSingleErrorClear(char *, char *);
+int cmdParserAllErrorSet(char *, char *);
+int cmdParserAllErrorClear(char *, char *);
 
 #ifdef __cplusplus
     }

@@ -257,6 +257,21 @@ int processUserCommand(char *userCmd, char *answerBuffer, char *ip) {
 // PARSERS
 //////////////////////////////////
 
+
+void logNotification(char *ip, char *message, ...) {
+
+	char buf[256];
+	va_list arglist;
+
+	va_start(arglist, message);
+	vsprintf(buf, message, arglist);
+	va_end(arglist);
+
+	msAddMsg(msGMS(),"%s [CLIENT] [IP: %s] %s", TimeStamp(0), ip, message);
+
+}
+
+
 int cmdParserSingleGetFullInfo(char *commandBody, char *answerBuffer, char *ip) {
 	int deviceIndex, cgwIndex, deviceId;
 	
@@ -666,5 +681,8 @@ int cmdParserAllErrorClear(char *commandBody, char *answerBuffer, char *ip) {
 	for (cgwIndex=0; cgwIndex < CFG_CANGW_BLOCKS_NUM; cgwIndex++) {
 		if (clearAllErrorState(cgwIndex) < 0) return -1;  
 	}
+	
+	logNotification(ip, "Clearing all errors status.");
+	
 	return 1;
 }

@@ -46,13 +46,10 @@ void toupperCase(char *text);
 //==============================================================================
 // Global variables
 parserFunciton RegisteredParsers[MAX_PARSERS_NUM];
-notificationFunction RegisteredNotifications[MAX_NOTIFICATIONS_NUM];
 
 int registeredParsersNum = 0;
-int registeredNotificationsNum = 0;
 int parsersInitialized = 0;
 map_int_t commandsHashMap;
-map_int_t notificationsHashMap;
 map_int_t devNamesHashMap;
 
 //==============================================================================
@@ -66,10 +63,8 @@ void InitCommandParsers(void) {
 	if (parsersInitialized) return;
 
 	map_init(&commandsHashMap);
-	map_init(&notificationsHashMap);
 	map_init(&devNamesHashMap); 
 	registeredParsersNum = 0;
-	registeredNotificationsNum = 0;
 	parsersInitialized = 1;	
 	
     registerCommandParser(CMD_PRIME_SINGLE_FULLINFO, CMD_ALIAS_SINGLE_FULLINFO, cmdParserSingleGetFullInfo);
@@ -142,23 +137,6 @@ void registerCommandParser(char *command, char *alias, parserFunciton parser) {
 	if (alias)  map_set(&commandsHashMap, alias, registeredParsersNum);
 	
 	registeredParsersNum++;
-}
-
-void registerNotification(char * command, char *alias, notificationFunction notification) {
-	static char msg[256];
-	if (registeredNotificationsNum >= MAX_NOTIFICATIONS_NUM) { 
-		sprintf(msg, "Unable to register a notification for a command '%s'. Maximum number of notifications (%d) exceeded.", command, MAX_NOTIFICATIONS_NUM);
-		MessagePopup("Internal application error.", msg);
-		exit(0);
-	}
-	
-	// Add notification to the list and add mapping from the command name/alias
-	// to the index of the added element in the list. 
-	RegisteredNotifications[registeredNotificationsNum] = notification;
-	map_set(&notificationsHashMap, command, registeredNotificationsNum);
-	if (alias)  map_set(&notificationsHashMap, alias, registeredNotificationsNum);
-	
-	registeredNotificationsNum++;	
 }
 
 
@@ -238,21 +216,11 @@ parserFunciton getCommandparser(char *command) {
 }
 
 
-notificationFunction getNotification(char *command) {
-	int *notificationIndex;
-	notificationIndex = map_get(&notificationsHashMap, command);
-	if (notificationIndex) return RegisteredNotifications[*notificationIndex];
-	
-	return 0;	
-}
-
-
 int processUserCommand(char *userCmd, char *answerBuffer, char *ip) {
 	char cmdName[256];
 	int cursor;
 	static char parserAnswer[1024];
 	parserFunciton parser;
-	notificationFunction notification;
 	int result;
 	
 	sscanf(userCmd, "%s%n", cmdName, &cursor);
@@ -270,10 +238,6 @@ int processUserCommand(char *userCmd, char *answerBuffer, char *ip) {
 			sprintf(answerBuffer, "!%s\n", userCmd); 
 			return -1; // Error occurred
 		}
-		
-		// Check if notification in the server log is required.
-		notification = getNotification(cmdName);
-		if (notification) notification(ip);
 
 		if (result == 0) return 0;  
 		

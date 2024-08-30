@@ -231,7 +231,7 @@ int processUserCommand(char *userCmd, char *answerBuffer, char *ip) {
 	parserAnswer[0] = 0;   
 	
 	if (parser) {
-		result = parser(userCmd + cursor, parserAnswer);
+		result = parser(userCmd + cursor, parserAnswer, ip);
 		
 		// Check for errors
 		if (result < 0) {
@@ -257,7 +257,7 @@ int processUserCommand(char *userCmd, char *answerBuffer, char *ip) {
 // PARSERS
 //////////////////////////////////
 
-int cmdParserSingleGetFullInfo(char *commandBody, char *answerBuffer) {
+int cmdParserSingleGetFullInfo(char *commandBody, char *answerBuffer, char *ip) {
 	int deviceIndex, cgwIndex, deviceId;
 	
 	if (sscanf(commandBody, "%d", &deviceIndex) != 1) return -1;
@@ -269,7 +269,7 @@ int cmdParserSingleGetFullInfo(char *commandBody, char *answerBuffer) {
 }
 
 
-int cmdParserSingleDacSet(char *commandBody, char *answerBuffer) {
+int cmdParserSingleDacSet(char *commandBody, char *answerBuffer, char *ip) {
 	int deviceIndex, cgwIndex, deviceId, channel;
 	double dacValue;
 
@@ -281,7 +281,7 @@ int cmdParserSingleDacSet(char *commandBody, char *answerBuffer) {
 }
 
 
-int cmdParserSingleDacRawSet(char *commandBody, char *answerBuffer) {
+int cmdParserSingleDacRawSet(char *commandBody, char *answerBuffer, char *ip) {
 	int deviceIndex, cgwIndex, deviceId, channel;
 	double dacValue;
 
@@ -293,7 +293,7 @@ int cmdParserSingleDacRawSet(char *commandBody, char *answerBuffer) {
 }
 
 
-int cmdParserSingleDacSlowSet(char *commandBody, char *answerBuffer) {
+int cmdParserSingleDacSlowSet(char *commandBody, char *answerBuffer, char *ip) {
 	
 	int deviceIndex, cgwIndex, deviceId, channel;
 	double dacValue;
@@ -306,7 +306,7 @@ int cmdParserSingleDacSlowSet(char *commandBody, char *answerBuffer) {
 }
 
 
-int cmdParserSingleDacSlowRawSet(char *commandBody, char *answerBuffer) {
+int cmdParserSingleDacSlowRawSet(char *commandBody, char *answerBuffer, char *ip) {
 	int deviceIndex, cgwIndex, deviceId, channel;
 	double dacValue;
 
@@ -318,7 +318,7 @@ int cmdParserSingleDacSlowRawSet(char *commandBody, char *answerBuffer) {
 }
 
 
-int cmdParserSingleAdcGet(char *commandBody, char *answerBuffer) {
+int cmdParserSingleAdcGet(char *commandBody, char *answerBuffer, char *ip) {
 	int deviceIndex, cgwIndex, deviceId, channel; 
 	double adcValue;
 	
@@ -331,7 +331,7 @@ int cmdParserSingleAdcGet(char *commandBody, char *answerBuffer) {
 }
 
 
-int cmdParserSingleAdcRawGet(char *commandBody, char *answerBuffer) {
+int cmdParserSingleAdcRawGet(char *commandBody, char *answerBuffer, char *ip) {
 	int deviceIndex, cgwIndex, deviceId, channel; 
 	double adcValue;
 	
@@ -344,7 +344,7 @@ int cmdParserSingleAdcRawGet(char *commandBody, char *answerBuffer) {
 }
 
 
-int cmdParserSingleAdcReset(char *commandBody, char *answerBuffer) {
+int cmdParserSingleAdcReset(char *commandBody, char *answerBuffer, char *ip) {
 	int deviceIndex, cgwIndex, deviceId; 
 	
 	if (sscanf(commandBody, "%d", &deviceIndex) != 1) return -1;
@@ -355,7 +355,7 @@ int cmdParserSingleAdcReset(char *commandBody, char *answerBuffer) {
 }
 
 
-int cmdParserSingleAllRegistersGet(char *commandBody, char *answerBuffer) {
+int cmdParserSingleAllRegistersGet(char *commandBody, char *answerBuffer, char *ip) {
 	int deviceIndex, cgwIndex, deviceId;
 	unsigned char inRegs, outRegs;
 
@@ -369,7 +369,7 @@ int cmdParserSingleAllRegistersGet(char *commandBody, char *answerBuffer) {
 }
 
 
-int cmdParserSingleOutRegistersSet(char *commandBody, char *answerBuffer) {
+int cmdParserSingleOutRegistersSet(char *commandBody, char *answerBuffer, char *ip) {
 	int deviceIndex, cgwIndex, deviceId;
 	unsigned int registers, mask;
 	
@@ -381,7 +381,7 @@ int cmdParserSingleOutRegistersSet(char *commandBody, char *answerBuffer) {
 }
 
 
-int cmdParserSingleInterlockRestore(char *commandBody, char *answerBuffer) {
+int cmdParserSingleInterlockRestore(char *commandBody, char *answerBuffer, char *ip) {
 	int deviceIndex, cgwIndex, deviceId;
 	
 	if (sscanf(commandBody, "%d", &deviceIndex) != 1) return -1;
@@ -392,7 +392,7 @@ int cmdParserSingleInterlockRestore(char *commandBody, char *answerBuffer) {
 }
 
 
-int cmdParserSingleInterlockDrop(char *commandBody, char *answerBuffer) {
+int cmdParserSingleInterlockDrop(char *commandBody, char *answerBuffer, char *ip) {
 	int deviceIndex, cgwIndex, deviceId;
 	
 	if (sscanf(commandBody, "%d", &deviceIndex) != 1) return -1;
@@ -403,7 +403,7 @@ int cmdParserSingleInterlockDrop(char *commandBody, char *answerBuffer) {
 }
 
 
-int cmdParserSingleForceOn(char *commandBody, char *answerBuffer) {
+int cmdParserSingleForceOn(char *commandBody, char *answerBuffer, char *ip) {
 	int deviceIndex, cgwIndex, deviceId; 
 	
 	if (sscanf(commandBody, "%d", &deviceIndex) != 1) return -1;
@@ -414,7 +414,7 @@ int cmdParserSingleForceOn(char *commandBody, char *answerBuffer) {
 }
 
 
-int cmdParserSingleForceOff(char *commandBody, char *answerBuffer) {
+int cmdParserSingleForceOff(char *commandBody, char *answerBuffer, char *ip) {
 	int deviceIndex, cgwIndex, deviceId; 
 	
 	if (sscanf(commandBody, "%d", &deviceIndex) != 1) return -1;
@@ -425,7 +425,7 @@ int cmdParserSingleForceOff(char *commandBody, char *answerBuffer) {
 }
 
 
-int cmdParserSinglePermissionOn(char *commandBody, char *answerBuffer) {
+int cmdParserSinglePermissionOn(char *commandBody, char *answerBuffer, char *ip) {
 	int deviceIndex, cgwIndex, deviceId; 
 	
 	if (sscanf(commandBody, "%d", &deviceIndex) != 1) return -1;
@@ -436,7 +436,7 @@ int cmdParserSinglePermissionOn(char *commandBody, char *answerBuffer) {
 }
 
 
-int cmdParserSinglePermissionOff(char *commandBody, char *answerBuffer) {
+int cmdParserSinglePermissionOff(char *commandBody, char *answerBuffer, char *ip) {
 	int deviceIndex, cgwIndex, deviceId; 
 	
 	if (sscanf(commandBody, "%d", &deviceIndex) != 1) return -1;
@@ -447,7 +447,7 @@ int cmdParserSinglePermissionOff(char *commandBody, char *answerBuffer) {
 }
 
 
-int cmdParserSingleStatusGet(char *commandBody, char *answerBuffer) {
+int cmdParserSingleStatusGet(char *commandBody, char *answerBuffer, char *ip) {
 	int deviceIndex, cgwIndex, deviceId;
 	unsigned int status;
 	
@@ -462,7 +462,7 @@ int cmdParserSingleStatusGet(char *commandBody, char *answerBuffer) {
 }
 
 
-int cmdParserSingleDeviceNameGet(char *commandBody, char *answerBuffer) {
+int cmdParserSingleDeviceNameGet(char *commandBody, char *answerBuffer, char *ip) {
 	int deviceIndex, cgwIndex, deviceId;
 	
 	if (sscanf(commandBody, "%d", &deviceIndex) != 1) return -1;
@@ -474,7 +474,7 @@ int cmdParserSingleDeviceNameGet(char *commandBody, char *answerBuffer) {
 }
 
 
-int cmdParserSingleAdcNameGet(char *commandBody, char *answerBuffer) {
+int cmdParserSingleAdcNameGet(char *commandBody, char *answerBuffer, char *ip) {
 	int deviceIndex, cgwIndex, deviceId, channel; 
 	
 	if (sscanf(commandBody, "%d %d", &deviceIndex, &channel) != 2) return -1;
@@ -486,7 +486,7 @@ int cmdParserSingleAdcNameGet(char *commandBody, char *answerBuffer) {
 }
 
 
-int cmdParserSingleDacNameGet(char *commandBody, char *answerBuffer) {
+int cmdParserSingleDacNameGet(char *commandBody, char *answerBuffer, char *ip) {
 	int deviceIndex, cgwIndex, deviceId, channel; 
 	
 	if (sscanf(commandBody, "%d %d", &deviceIndex, &channel) != 2) return -1;
@@ -498,7 +498,7 @@ int cmdParserSingleDacNameGet(char *commandBody, char *answerBuffer) {
 }
 
 
-int cmdParserSingleInregNameGet(char *commandBody, char *answerBuffer) {
+int cmdParserSingleInregNameGet(char *commandBody, char *answerBuffer, char *ip) {
 	int deviceIndex, cgwIndex, deviceId, registerIndex; 
 	
 	if (sscanf(commandBody, "%d %d", &deviceIndex, &registerIndex) != 2) return -1;
@@ -510,7 +510,7 @@ int cmdParserSingleInregNameGet(char *commandBody, char *answerBuffer) {
 }
 
 
-int cmdParserSingleOutRegNameGet(char *commandBody, char *answerBuffer) {
+int cmdParserSingleOutRegNameGet(char *commandBody, char *answerBuffer, char *ip) {
 	int deviceIndex, cgwIndex, deviceId, registerIndex; 
 	
 	if (sscanf(commandBody, "%d %d", &deviceIndex, &registerIndex) != 2) return -1;
@@ -522,7 +522,7 @@ int cmdParserSingleOutRegNameGet(char *commandBody, char *answerBuffer) {
 }
 
 
-int cmdParserAllAdcReset(char *commandBody, char *answerBuffer) {
+int cmdParserAllAdcReset(char *commandBody, char *answerBuffer, char *ip) {
 	int cgwIndex;
 	for (cgwIndex=0; cgwIndex < CFG_CANGW_BLOCKS_NUM; cgwIndex++) {
 		if (resetAllAdcMeasurements(cgwIndex) < 0) return -1;  
@@ -531,7 +531,7 @@ int cmdParserAllAdcReset(char *commandBody, char *answerBuffer) {
 }
 
 
-int cmdParserAllForceOff(char *commandBody, char *answerBuffer) {
+int cmdParserAllForceOff(char *commandBody, char *answerBuffer, char *ip) {
 	int cgwIndex;
 	for (cgwIndex=0; cgwIndex < CFG_CANGW_BLOCKS_NUM; cgwIndex++) {
 		if (controlAllForceOff(cgwIndex) < 0) return -1;  
@@ -540,7 +540,7 @@ int cmdParserAllForceOff(char *commandBody, char *answerBuffer) {
 }
 
 
-int cmdParserAllPermissionOff(char *commandBody, char *answerBuffer) {
+int cmdParserAllPermissionOff(char *commandBody, char *answerBuffer, char *ip) {
 	int cgwIndex;
 	for (cgwIndex=0; cgwIndex < CFG_CANGW_BLOCKS_NUM; cgwIndex++) {
 		if (controlAllPermissionOff(cgwIndex) < 0) return -1;  
@@ -549,7 +549,7 @@ int cmdParserAllPermissionOff(char *commandBody, char *answerBuffer) {
 }
 
 
-int cmdParserAllZeroDac(char *commandBody, char *answerBuffer) {
+int cmdParserAllZeroDac(char *commandBody, char *answerBuffer, char *ip) {
 	int cgwIndex;
 	for (cgwIndex=0; cgwIndex < CFG_CANGW_BLOCKS_NUM; cgwIndex++) {
 		if (setAllDacToZero(cgwIndex) < 0) return -1;  
@@ -558,7 +558,7 @@ int cmdParserAllZeroDac(char *commandBody, char *answerBuffer) {
 }
 
 
-int cmdParserCangwStatusGet(char *commandBody, char *answerBuffer) {
+int cmdParserCangwStatusGet(char *commandBody, char *answerBuffer, char *ip) {
 	int statusAll, statusSingle;
 	int cgwIndex;
 	
@@ -572,19 +572,19 @@ int cmdParserCangwStatusGet(char *commandBody, char *answerBuffer) {
 }
 
 
-int cmdParserServerNameGet(char *commandBody, char *answerBuffer) {
+int cmdParserServerNameGet(char *commandBody, char *answerBuffer, char *ip) {
 	strcpy(answerBuffer, CFG_SERVER_NAME);
 	return 1;
 }
 
 
-int cmdParserDevicesNumGet(char *commandBody, char *answerBuffer) { 
+int cmdParserDevicesNumGet(char *commandBody, char *answerBuffer, char *ip) { 
 	sprintf(answerBuffer, "%d", CFG_PSMCU_DEVICES_NUM); 
 	return 1;
 }
 
 
-int cmdParserName2IdGet(char *commandBody, char *answerBuffer) {
+int cmdParserName2IdGet(char *commandBody, char *answerBuffer, char *ip) {
 	char deviceName[128];
 	char *start;
 	int *devIndex;
@@ -601,7 +601,7 @@ int cmdParserName2IdGet(char *commandBody, char *answerBuffer) {
 }
 
 
-int cmdParserSingleErrorSet(char *commandBody, char *answerBuffer) {
+int cmdParserSingleErrorSet(char *commandBody, char *answerBuffer, char *ip) {
 	int deviceIndex, cgwIndex, deviceId, cursor;
 	char *message_ptr;
 	
@@ -617,7 +617,7 @@ int cmdParserSingleErrorSet(char *commandBody, char *answerBuffer) {
 	
 }
 
-int cmdParserSingleErrorGet(char *commandBody, char *answerBuffer) {
+int cmdParserSingleErrorGet(char *commandBody, char *answerBuffer, char *ip) {
 	
 	int deviceIndex, cgwIndex, deviceId;
 	char * msg_buffer_ptr;
@@ -633,7 +633,7 @@ int cmdParserSingleErrorGet(char *commandBody, char *answerBuffer) {
     return 1;	
 }
 
-int cmdParserSingleErrorClear(char *commandBody, char *answerBuffer) {
+int cmdParserSingleErrorClear(char *commandBody, char *answerBuffer, char *ip) {
 	
 	int deviceIndex, cgwIndex, deviceId;
 	
@@ -645,7 +645,7 @@ int cmdParserSingleErrorClear(char *commandBody, char *answerBuffer) {
     return 1;	
 }
 
-int cmdParserAllErrorSet(char *commandBody, char *answerBuffer) {
+int cmdParserAllErrorSet(char *commandBody, char *answerBuffer, char *ip) {
 	
 	int cgwIndex;
 	char *message_ptr;
@@ -660,7 +660,7 @@ int cmdParserAllErrorSet(char *commandBody, char *answerBuffer) {
     return 1;	
 }
 
-int cmdParserAllErrorClear(char *commandBody, char *answerBuffer) {
+int cmdParserAllErrorClear(char *commandBody, char *answerBuffer, char *ip) {
 	
 	int cgwIndex;
 	for (cgwIndex=0; cgwIndex < CFG_CANGW_BLOCKS_NUM; cgwIndex++) {

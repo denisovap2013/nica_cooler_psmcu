@@ -133,7 +133,7 @@
 #define CMD_ALIAS_ALL_ERR_CLEAR "IST:ALL:ERROR:CLEAR"
 //==============================================================================
 // Types
-typedef int (*parserFunciton)(char *commandBody, char *answerBuffer);
+typedef int (*parserFunciton)(char *commandBody, char *answerBuffer, char *ip);
 //==============================================================================
 // External variables
 
@@ -149,48 +149,48 @@ void dataExchFunc(unsigned handle, char *ip);
 
 // Commands parsers (cmdBody, answerBuffer)
 
-int cmdUnknownCommandParser(char *, char *);
+int cmdUnknownCommandParser(char *, char *, char *);
 
-int cmdParserSingleGetFullInfo(char *, char *);
-int cmdParserSingleDacSet(char *, char *);
-int cmdParserSingleDacRawSet(char *, char *);
+int cmdParserSingleGetFullInfo(char *, char *, char *);
+int cmdParserSingleDacSet(char *, char *, char *);
+int cmdParserSingleDacRawSet(char *, char *, char *);
 
-int cmdParserSingleDacSlowSet(char *, char *);
-int cmdParserSingleDacSlowRawSet(char *, char *);
+int cmdParserSingleDacSlowSet(char *, char *, char *);
+int cmdParserSingleDacSlowRawSet(char *, char *, char *);
 
-int cmdParserSingleAdcGet(char *, char *);
-int cmdParserSingleAdcRawGet(char *, char *);
-int cmdParserSingleAdcReset(char *, char *);
-int cmdParserSingleAllRegistersGet(char *, char *);
-int cmdParserSingleOutRegistersSet(char *, char *);
-int cmdParserSingleInterlockRestore(char *, char *);
-int cmdParserSingleInterlockDrop(char *, char *);
-int cmdParserSingleForceOn(char *, char *);
-int cmdParserSingleForceOff(char *, char *);
-int cmdParserSinglePermissionOn(char *, char *);
-int cmdParserSinglePermissionOff(char *, char *);
-int cmdParserSingleStatusGet(char *, char *);
-int cmdParserSingleDeviceNameGet(char *, char *);
-int cmdParserSingleAdcNameGet(char *, char *);
-int cmdParserSingleDacNameGet(char *, char *);
-int cmdParserSingleInregNameGet(char *, char *);
-int cmdParserSingleOutRegNameGet(char *, char *);
-int cmdParserAllAdcReset(char *, char *);
-int cmdParserAllForceOff(char *, char *);		
-int cmdParserAllZeroDac(char *, char *);
-int cmdParserAllPermissionOff(char *, char *);	
-int cmdParserCangwStatusGet(char *, char *);
-int cmdParserServerNameGet(char *, char *);
+int cmdParserSingleAdcGet(char *, char *, char *);
+int cmdParserSingleAdcRawGet(char *, char *, char *);
+int cmdParserSingleAdcReset(char *, char *, char *);
+int cmdParserSingleAllRegistersGet(char *, char *, char *);
+int cmdParserSingleOutRegistersSet(char *, char *, char *);
+int cmdParserSingleInterlockRestore(char *, char *, char *);
+int cmdParserSingleInterlockDrop(char *, char *, char *);
+int cmdParserSingleForceOn(char *, char *, char *);
+int cmdParserSingleForceOff(char *, char *, char *);
+int cmdParserSinglePermissionOn(char *, char *, char *);
+int cmdParserSinglePermissionOff(char *, char *, char *);
+int cmdParserSingleStatusGet(char *, char *, char *);
+int cmdParserSingleDeviceNameGet(char *, char *, char *);
+int cmdParserSingleAdcNameGet(char *, char *, char *);
+int cmdParserSingleDacNameGet(char *, char *, char *);
+int cmdParserSingleInregNameGet(char *, char *, char *);
+int cmdParserSingleOutRegNameGet(char *, char *, char *);
+int cmdParserAllAdcReset(char *, char *, char *);
+int cmdParserAllForceOff(char *, char *, char *);		
+int cmdParserAllZeroDac(char *, char *, char *);
+int cmdParserAllPermissionOff(char *, char *, char *);	
+int cmdParserCangwStatusGet(char *, char *, char *);
+int cmdParserServerNameGet(char *, char *, char *);
 
-int cmdParserDevicesNumGet(char *, char *);	
-int cmdParserName2IdGet(char *, char *);
+int cmdParserDevicesNumGet(char *, char *, char *);	
+int cmdParserName2IdGet(char *, char *, char *);
 
 // Commapnds parsers for error status
-int cmdParserSingleErrorSet(char *, char *);
-int cmdParserSingleErrorGet(char *, char *);
-int cmdParserSingleErrorClear(char *, char *);
-int cmdParserAllErrorSet(char *, char *);
-int cmdParserAllErrorClear(char *, char *);
+int cmdParserSingleErrorSet(char *, char *, char *);
+int cmdParserSingleErrorGet(char *, char *, char *);
+int cmdParserSingleErrorClear(char *, char *, char *);
+int cmdParserAllErrorSet(char *, char *, char *);
+int cmdParserAllErrorClear(char *, char *, char *);
 
 #ifdef __cplusplus
     }

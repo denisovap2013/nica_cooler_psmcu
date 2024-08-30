@@ -40,15 +40,19 @@
 
 //==============================================================================
 // Static functions
-int processUserCommand(char *userCmd, char *answerBuffer);
+int processUserCommand(char *userCmd, char *answerBuffer, char *ip);
 void toupperCase(char *text);
 
 //==============================================================================
 // Global variables
 parserFunciton RegisteredParsers[MAX_PARSERS_NUM];
+notificationFunction RegisteredNotifications[MAX_NOTIFICATIONS_NUM];
+
 int registeredParsersNum = 0;
+int registeredNotificationsNum = 0;
 int parsersInitialized = 0;
 map_int_t commandsHashMap;
+map_int_t notificationsHashMap;
 map_int_t devNamesHashMap;
 
 //==============================================================================
@@ -62,8 +66,10 @@ void InitCommandParsers(void) {
 	if (parsersInitialized) return;
 
 	map_init(&commandsHashMap);
+	map_init(&notificationsHashMap);
 	map_init(&devNamesHashMap); 
 	registeredParsersNum = 0;
+	registeredNotificationsNum = 0;
 	parsersInitialized = 1;	
 	
     registerCommandParser(CMD_PRIME_SINGLE_FULLINFO, CMD_ALIAS_SINGLE_FULLINFO, cmdParserSingleGetFullInfo);
@@ -121,7 +127,7 @@ void ReleaseCommandParsers(void) {
 	parsersInitialized = 0;	
 }
 
-void registerCommandParser(char *command, char *alias, int (*parser)(char *, char *)) {
+void registerCommandParser(char *command, char *alias, parserFunciton parser) {
 	static char msg[256];
 	if (registeredParsersNum >= MAX_PARSERS_NUM) { 
 		sprintf(msg, "Unable to register a command '%s'. Maximum number of parsers (%d) exceeded.", command, MAX_PARSERS_NUM);
@@ -129,11 +135,30 @@ void registerCommandParser(char *command, char *alias, int (*parser)(char *, cha
 		exit(0);
 	}
 	
+	// Add command parser to the list and add mapping from the command name/alias
+	// to the index of the added element in the list.
 	RegisteredParsers[registeredParsersNum] = parser;
 	map_set(&commandsHashMap, command, registeredParsersNum);
 	if (alias)  map_set(&commandsHashMap, alias, registeredParsersNum);
 	
 	registeredParsersNum++;
+}
+
+void registerNotification(char * command, char *alias, notificationFunction notification) {
+	static char msg[256];
+	if (registeredNotificationsNum >= MAX_NOTIFICATIONS_NUM) { 
+		sprintf(msg, "Unable to register a notification for a command '%s'. Maximum number of notifications (%d) exceeded.", command, MAX_NOTIFICATIONS_NUM);
+		MessagePopup("Internal application error.", msg);
+		exit(0);
+	}
+	
+	// Add notification to the list and add mapping from the command name/alias
+	// to the index of the added element in the list. 
+	RegisteredNotifications[registeredNotificationsNum] = notification;
+	map_set(&notificationsHashMap, command, registeredNotificationsNum);
+	if (alias)  map_set(&notificationsHashMap, alias, registeredNotificationsNum);
+	
+	registeredNotificationsNum++;	
 }
 
 
@@ -160,7 +185,7 @@ void toupperCase(char *text) {
 }
 
 
-void dataExchFunc(unsigned handle, void * arg)
+void dataExchFunc(unsigned handle, char *ip)
 {
 	static char command[MAX_RECEIVED_BYTES * 2] = "";
 	static char subcommand[MAX_RECEIVED_BYTES * 2];
@@ -196,7 +221,7 @@ void dataExchFunc(unsigned handle, void * arg)
 		lfp[0] = 0;
 		strcpy(subcommand, command);
 		strcpy(command, lfp+1);
-		processUserCommand(subcommand, answerBuffer);
+		processUserCommand(subcommand, answerBuffer, ip);
 		if (answerBuffer[0] != 0) ServerTCPWrite(handle, answerBuffer, strlen(answerBuffer) + 1, 0);
 	}
 	
@@ -213,11 +238,21 @@ parserFunciton getCommandparser(char *command) {
 }
 
 
-int processUserCommand(char *userCmd, char *answerBuffer) {
+notificationFunction getNotification(char *command) {
+	int *notificationIndex;
+	notificationIndex = map_get(&notificationsHashMap, command);
+	if (notificationIndex) return RegisteredNotifications[*notificationIndex];
+	
+	return 0;	
+}
+
+
+int processUserCommand(char *userCmd, char *answerBuffer, char *ip) {
 	char cmdName[256];
 	int cursor;
 	static char parserAnswer[1024];
 	parserFunciton parser;
+	notificationFunction notification;
 	int result;
 	
 	sscanf(userCmd, "%s%n", cmdName, &cursor);
@@ -225,18 +260,23 @@ int processUserCommand(char *userCmd, char *answerBuffer) {
 	parser = getCommandparser(cmdName);
 	
 	answerBuffer[0] = 0;  // Empty string (no answer)
-	parserAnswer[0] = 0;
+	parserAnswer[0] = 0;   
 	
 	if (parser) {
 		result = parser(userCmd + cursor, parserAnswer);
 		
-		if (result == 0) return 0;
-		
+		// Check for errors
 		if (result < 0) {
 			sprintf(answerBuffer, "!%s\n", userCmd); 
 			return -1; // Error occurred
 		}
+		
+		// Check if notification in the server log is required.
+		notification = getNotification(cmdName);
+		if (notification) notification(ip);
 
+		if (result == 0) return 0;  
+		
 		if (strlen(parserAnswer))
 			sprintf(answerBuffer, "%s %s\n", cmdName, parserAnswer);
 

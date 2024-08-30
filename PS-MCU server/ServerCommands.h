@@ -23,6 +23,7 @@
 //==============================================================================
 // Constants
 #define MAX_PARSERS_NUM 128
+#define MAX_NOTIFICATIONS_NUM 128
 
 #define CMD_PRIME_SINGLE_FULLINFO "PSMCU:SINGLE:FULLINFO"
 #define CMD_ALIAS_SINGLE_FULLINFO "IST:SINGLE:FULLINFO"
@@ -133,7 +134,8 @@
 #define CMD_ALIAS_ALL_ERR_CLEAR "IST:ALL:ERROR:CLEAR"
 //==============================================================================
 // Types
-typedef int (*parserFunciton)(char *, char *);
+typedef int (*parserFunciton)(char *commandBody, char *answerBuffer);
+typedef void (*notificationFunction)(char * ip); 
 //==============================================================================
 // External variables
 
@@ -141,10 +143,13 @@ typedef int (*parserFunciton)(char *, char *);
 // Global functions
 void InitCommandParsers(void);
 void ReleaseCommandParsers(void);
-void registerCommandParser(char * command, char *alias, int (*parser)(char *, char *)); 
-parserFunciton getCommandparser(char *command);
+void registerCommandParser(char * command, char *alias, parserFunciton parser);
+void registerNotification(char * command, char *alias, notificationFunction notification);
 
-void dataExchFunc(unsigned handle,void * arg);
+parserFunciton getCommandparser(char *command);
+notificationFunction getNotification(char *command);
+
+void dataExchFunc(unsigned handle, char *ip);
 
 // Commands parsers (cmdBody, answerBuffer)
 

@@ -27,7 +27,7 @@ typedef struct tcpConnection_ServerInterface
 	int initialized;  // flag indicating that the server was created
 	int server_active;  // flag for controlling the programm loop (while 1, the server processes system events and reads data from CanGw)
 	void (*bgdFuncs)(void);  // Function called from the program loop (consider moving this logic apart from the TCP server implementation)
-	void (*dataExchangeFunc)(unsigned handle, void *arg);  // function for processing the commands from TCP clients
+	void (*dataExchangeFunc)(unsigned handle, char *ip);  // function for processing the commands from TCP clients
 	unsigned  clients[TCP_CONNECTION_MAX_CLIENTS];
 	int clientsNum;
 } tcpConnection_ServerInterface_t;
@@ -35,7 +35,7 @@ typedef struct tcpConnection_ServerInterface
 int tcpConnection_InitServerInterface(tcpConnection_ServerInterface_t * tcpSI);
 int tcpConnection_ClientNumberFromHandle(tcpConnection_ServerInterface_t * tcpSI, unsigned handle);
 int tcpConnection_SetBackgroundFunction(tcpConnection_ServerInterface_t * tcpSI, void (*bgdFunc)(void));
-int tcpConnection_SetDataExchangeFunction(tcpConnection_ServerInterface_t * tcpSI, void (*dataExchangeFunc)(unsigned handle,void *arg));
+int tcpConnection_SetDataExchangeFunction(tcpConnection_ServerInterface_t * tcpSI, void (*dataExchangeFunc)(unsigned handle, char *ip));
 
 int tcpConnection_ServerCallback(unsigned handle, int xType, int errCode, void * callbackData);
 int tcpConnection_RunServer(int Port, tcpConnection_ServerInterface_t * tcpSI );

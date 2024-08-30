@@ -78,12 +78,12 @@ int tcpConnection_SetDataExchangeFunction(tcpConnection_ServerInterface_t * tcpS
 // TCP_connection server functions
 int tcpConnection_ServerCallback(unsigned handle, int xType, int errCode, void * callbackData)
 {
-	char buf[256];
+	char ip[256];
 	int clientNum;
 
 	tcpConnection_ServerInterface_t * tcpSI = (tcpConnection_ServerInterface_t*)callbackData;
 	
-	GetTCPPeerAddr(handle, buf, 256);
+	GetTCPPeerAddr(handle, ip, 256);
 	switch(xType)
 	{
 		case TCP_CONNECT:
@@ -91,11 +91,11 @@ int tcpConnection_ServerCallback(unsigned handle, int xType, int errCode, void *
 
 			if (clientNum >= 0)
 			{
-				msAddMsg(msGMS(), "%s [CLIENT] A client (%d) [IP: %s] has connected.", TimeStamp(0), clientNum, buf);
+				msAddMsg(msGMS(), "%s [CLIENT] A client (%d) [IP: %s] has connected.", TimeStamp(0), clientNum, ip);
 			}
 			else
 			{
-				msAddMsg(msGMS(),"%s [CLIENT] Sending the disconnect request to the client [IP: %s].", TimeStamp(0), buf);   
+				msAddMsg(msGMS(),"%s [CLIENT] Sending the disconnect request to the client [IP: %s].", TimeStamp(0), ip);   
 				DisconnectTCPClient(handle);	
 			}
 			break;
@@ -103,18 +103,18 @@ int tcpConnection_ServerCallback(unsigned handle, int xType, int errCode, void *
 			clientNum = tcpConnection_DeleteClient(tcpSI, handle);
 			if (clientNum >= 0)
 			{
-				msAddMsg(msGMS(),"%s [CLIENT] A client (%d) [IP: %s] has disconnected.", TimeStamp(0), clientNum, buf);
+				msAddMsg(msGMS(),"%s [CLIENT] A client (%d) [IP: %s] has disconnected.", TimeStamp(0), clientNum, ip);
 			}
 			else
 			{
-				msAddMsg(msGMS(),"%s [CLIENT] Undefined connection [IP: %s] is closed", TimeStamp(0), buf);	
+				msAddMsg(msGMS(),"%s [CLIENT] Undefined connection [IP: %s] is closed", TimeStamp(0), ip);	
 			}
 			break;
 		case TCP_DATAREADY:
 			//msAddMsg(msGMS(),"A client tries to send messages.");
 			if (tcpSI->dataExchangeFunc)
 			{
-				tcpSI->dataExchangeFunc(handle, 0);	
+				tcpSI->dataExchangeFunc(handle, ip);	
 			}
 			break;
 	}

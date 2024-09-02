@@ -59,6 +59,7 @@ int getDacChannelName(int cgwIndex, int deviceId, int channel, char *buffer);
 int getInputRegisterName(int cgwIndex, int deviceId, int registerIndex, char *buffer);
 int getOutputRegisterName(int cgwIndex, int deviceId, int registerIndex, char *buffer);
 int getDeviceName(int cgwIndex, int deviceId, char *buffer);
+char * getDeviceNamePtr(int cgwIndex, int deviceId);
 
 int setAllDacToZero(int cgwIndex);
 

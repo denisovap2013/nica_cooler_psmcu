@@ -100,8 +100,8 @@ void InitCommandParsers(void) {
 	
 	// Register error state commnds
 	registerCommandParser(CMD_PRIME_SINGLE_ERR_SET, CMD_ALIAS_SINGLE_ERR_SET, cmdParserSingleErrorSet);
-	registerCommandParser(CMD_PRIME_SINGLE_ERR_CLEAR, CMD_ALIAS_SINGLE_ERR_CLEAR, cmdParserSingleErrorGet);
-	registerCommandParser(CMD_PRIME_SINGLE_ERR_GET, CMD_ALIAS_SINGLE_ERR_GET, cmdParserSingleErrorClear);
+	registerCommandParser(CMD_PRIME_SINGLE_ERR_CLEAR, CMD_ALIAS_SINGLE_ERR_CLEAR, cmdParserSingleErrorClear);
+	registerCommandParser(CMD_PRIME_SINGLE_ERR_GET, CMD_ALIAS_SINGLE_ERR_GET, cmdParserSingleErrorGet);
 	registerCommandParser(CMD_PRIME_ALL_ERR_SET, CMD_ALIAS_ALL_ERR_SET, cmdParserAllErrorSet);
 	registerCommandParser(CMD_PRIME_ALL_ERR_CLEAR, CMD_ALIAS_ALL_ERR_CLEAR, cmdParserAllErrorClear);
 	
@@ -260,14 +260,14 @@ int processUserCommand(char *userCmd, char *answerBuffer, char *ip) {
 
 void logNotification(char *ip, char *message, ...) {
 
-	char buf[256];
+	char buf[512];
 	va_list arglist;
 
 	va_start(arglist, message);
 	vsprintf(buf, message, arglist);
 	va_end(arglist);
 
-	msAddMsg(msGMS(),"%s [CLIENT] [IP: %s] %s", TimeStamp(0), ip, message);
+	msAddMsg(msGMS(),"%s [CLIENT] [IP: %s] %s", TimeStamp(0), ip, buf);
 
 }
 
@@ -627,8 +627,11 @@ int cmdParserSingleErrorSet(char *commandBody, char *answerBuffer, char *ip) {
 	while ((message_ptr[0] == ' ') || (message_ptr[0] == '\t')) message_ptr++;  // skip leading blank spaces 
 
 	if (setSingleErrorState(cgwIndex, deviceId, message_ptr) < 0) return -1;
+
+	logNotification(ip, "Setting the error status for the device '%s' (index %d, block %d, address 0x%X). Message: '%s'.",
+					getDeviceNamePtr(cgwIndex, deviceId), deviceIndex, cgwIndex, deviceId, message_ptr);
 	
-	return 1;
+	return 1; 
 	
 }
 
@@ -656,6 +659,9 @@ int cmdParserSingleErrorClear(char *commandBody, char *answerBuffer, char *ip) {
 	if (deviceIndexToDeviceId(deviceIndex, &cgwIndex, &deviceId) < 0) return -1;
 
 	if (clearSingleErrorState(cgwIndex, deviceId) < 0) return -1;
+
+	logNotification(ip, "Clearing the error status for the device '%s' (index %d, block %d, address 0x%X).",
+					getDeviceNamePtr(cgwIndex, deviceId), deviceIndex, cgwIndex, deviceId);
 	
     return 1;	
 }
@@ -671,6 +677,8 @@ int cmdParserAllErrorSet(char *commandBody, char *answerBuffer, char *ip) {
 	for (cgwIndex=0; cgwIndex < CFG_CANGW_BLOCKS_NUM; cgwIndex++) {
 		if (setAllErrorState(cgwIndex, message_ptr) < 0) return -1;  
 	}
+	
+	logNotification(ip, "Setting the error status for all devices with message '%s'.", message_ptr);
 
     return 1;	
 }

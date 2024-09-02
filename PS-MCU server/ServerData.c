@@ -111,7 +111,7 @@ int getDeviceFullInfo(int cgwIndex, int deviceId, char *formattedInfo) {
 int getDeviceStatus(int cgwIndex, int deviceId, unsigned int *status) {
 	CHECK_DEVICE_ID(deviceId, deviceKit[cgwIndex]);
 
-	*status = deviceKit[cgwIndex].active[deviceId] & (deviceKit[cgwIndex].error_state[deviceId] << 1);
+	*status = deviceKit[cgwIndex].active[deviceId] | (deviceKit[cgwIndex].error_state[deviceId] << 1);
 
 	return 0;
 }
@@ -267,8 +267,12 @@ int getOutputRegisterName(int cgwIndex, int deviceId, int registerIndex, char *b
 
 int getDeviceName(int cgwIndex, int deviceId, char *buffer) {
 	CHECK_DEVICE_ID(deviceId, deviceKit[cgwIndex]);
-	strcpy(buffer, ((cgwPsMcu_Information_t*)deviceKit[cgwIndex].parameters[deviceId])->deviceName);
+	strcpy(buffer, getDeviceNamePtr(cgwIndex, deviceId));
 	return 0;	
+}
+
+char * getDeviceNamePtr(int cgwIndex, int deviceId) {
+	return ((cgwPsMcu_Information_t*)deviceKit[cgwIndex].parameters[deviceId])->deviceName;
 }
 
 

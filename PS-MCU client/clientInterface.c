@@ -23,6 +23,7 @@
 
 // Main menu block 
 int mainMenuHandle;
+int errPanelHandle;
 int psMcuWindowHandles[PSMCU_MAX_NUM]; 
 
 int SERVER_CONNECTION_INDICATOR;
@@ -54,6 +55,8 @@ int PSMCU_BLOCK_CURRENT_PERM_BTNS[PSMCU_MAX_NUM][2];
 int PSMCU_BLOCK_FORCE_BTNS[PSMCU_MAX_NUM][2];
 int PSMCU_BLOCK_ZERO_FAST_BTN[PSMCU_MAX_NUM];
 int PSMCU_BLOCK_ERROR_STATE_LED[PSMCU_MAX_NUM];
+int PSMCU_BLOCK_ERROR_SHOW_BTN[PSMCU_MAX_NUM];
+int PSMCU_BLOCK_ERROR_CLEAR_BTN[PSMCU_MAX_NUM];
 
 int PSMCU_GRAPHS_WINDOW_HANDLES[PSMCU_MAX_NUM][PSMCU_ADC_CHANNELS_NUM];
 
@@ -216,6 +219,7 @@ void setupSinglePsMcuGui(int psMcuIndex) {
 	}
 	
 	
+	// Error state control
     PSMCU_BLOCK_ERROR_STATE_LED[i] = NewCtrl(psMcuWindowHandles[i], CTRL_SQUARE_LED_LS, "Error!", top, left);
 	SetCtrlAttribute(psMcuWindowHandles[i], PSMCU_BLOCK_ERROR_STATE_LED[i], ATTR_OFF_COLOR, VAL_GRAY);
 	SetCtrlAttribute(psMcuWindowHandles[i], PSMCU_BLOCK_ERROR_STATE_LED[i], ATTR_ON_COLOR, VAL_RED);
@@ -223,7 +227,18 @@ void setupSinglePsMcuGui(int psMcuIndex) {
 	SetCtrlAttribute(psMcuWindowHandles[i], PSMCU_BLOCK_ERROR_STATE_LED[i], ATTR_HEIGHT, 20);
 	SetCtrlAttribute(psMcuWindowHandles[i], PSMCU_BLOCK_ERROR_STATE_LED[i], ATTR_LABEL_TOP, top + 3);  
 	SetCtrlAttribute(psMcuWindowHandles[i], PSMCU_BLOCK_ERROR_STATE_LED[i], ATTR_LABEL_LEFT, left + 25);
-																							 
+	
+	PSMCU_BLOCK_ERROR_SHOW_BTN[i] = NewCtrl(psMcuWindowHandles[i], CTRL_SQUARE_COMMAND_BUTTON_LS, "Show", top, left + 60);
+	SetCtrlAttribute(psMcuWindowHandles[i], PSMCU_BLOCK_ERROR_SHOW_BTN[i], ATTR_HEIGHT, ERR_BUTTON_HEIGHT);
+	SetCtrlAttribute(psMcuWindowHandles[i], PSMCU_BLOCK_ERROR_SHOW_BTN[i], ATTR_WIDTH, ERR_BUTTON_WIDTH); 
+		
+    PSMCU_BLOCK_ERROR_CLEAR_BTN[i]= NewCtrl(psMcuWindowHandles[i], CTRL_SQUARE_COMMAND_BUTTON_LS, "Clear", top, left + 60 + ERR_BUTTON_WIDTH + 5);
+	SetCtrlAttribute(psMcuWindowHandles[i], PSMCU_BLOCK_ERROR_CLEAR_BTN[i], ATTR_HEIGHT, ERR_BUTTON_HEIGHT);
+	SetCtrlAttribute(psMcuWindowHandles[i], PSMCU_BLOCK_ERROR_CLEAR_BTN[i], ATTR_WIDTH, ERR_BUTTON_WIDTH); 
+	
+	// Error buttons callback
+	InstallCtrlCallback(psMcuWindowHandles[i], PSMCU_BLOCK_ERROR_SHOW_BTN[i], errShowBtnsCallback, NULL);
+	InstallCtrlCallback(psMcuWindowHandles[i], PSMCU_BLOCK_ERROR_CLEAR_BTN[i], errClearBtnsCallback, NULL);
 	
 	if (top + 5 > maxHeight) maxHeight = top + 5;
 
@@ -247,7 +262,7 @@ void initGui(void) {
 	// Main menu buttons
 	//////////////////////////////////
 
-	top = 5;
+	top = 5 + 23;  // including 23 pixels for a menu bar
 	left = 5;
 
 	SERVER_CONNECTION_INDICATOR = NewCtrl(mainMenuHandle, CTRL_SQUARE_LED_LS, SERVER_INDICATOR_OFFLINE_LABEL, top, left);

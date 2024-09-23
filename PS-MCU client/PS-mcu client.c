@@ -74,14 +74,14 @@ void createInfoFile(void);
 void RequestNames(void);
 int parseChannelName(char *src, char *prefix, int expectedDevIndex, int expectedChannel, char *output);
 int parseServerName(char *src, char *prefix, char *output);
-int parseDeviceName(char *src, char *prefix, int expectedDevIndex, char *output);  
+int parseDeviceName(char *src, char *prefix, int expectedDevIndex, char *output);
 void UpdateServerName(char *name);
 void requestDataFromServer(void);
 void requestCanGwStatus(void);
 void ProcessCommandsQueue(void);
 void parseUbsIncomingCommand(char *, int);
 void SendDACValue(int deviceIndex, int channel, double value, int fast, int confirmFast);
-void SendRegistersCommand(char *, int);
+void SendDeviceCommand(char *, int);
 void SendBroadcastCommand(char *);
 
 // Commands
@@ -122,6 +122,7 @@ int pipelineGuiLock = 0;
 // Global functions
 void parseFullInfo(char *);
 void parseCanGwConnectionStatus(char *);
+void parseSingleErrorMessage(char *);
 
 
 /// HIFN The main entry-point function.
@@ -166,7 +167,7 @@ int main (int argc, char *argv[])
 		sprintf(title, "PS-MCU %d: Unknown", i+1);
 		SetPanelAttribute(psMcuWindowHandles[i], ATTR_TITLE, title);
 	}
-	//errChk (mainMenuHandle = LoadPanel (0, "DenisovUBSclient.uir", BlockMenu)); 
+	errChk (errPanelHandle = LoadPanel (0, "PS-mcu client.uir", errPanel)); 
 	
 	/////////////
 	clearNames();
@@ -634,7 +635,7 @@ void SendDACValue(int deviceIndex, int channel, double value, int fast, int conf
 }
 
 
-void SendRegistersCommand(char * cmd, int deviceIndex) {
+void SendDeviceCommand(char * cmd, int deviceIndex) {
 	char command[256];
 	
 	if (!connectionEstablished) return;
@@ -719,6 +720,13 @@ void parseUbsIncomingCommand(char *command, int bytes) {
 		if ((bufpos = strstr(subcommand, "PSMCU:CANGW:STATUS:GET")) == subcommand)
 		{										
 			parseCanGwConnectionStatus(bufpos + strlen("PSMCU:CANGW:STATUS:GET"));
+			continue;
+		}
+		
+		// PSMCU:SINGLE:ERROR:GET
+		if ((bufpos = strstr(subcommand, "PSMCU:SINGLE:ERROR:GET")) == subcommand)
+		{										
+			parseSingleErrorMessage(bufpos + strlen("PSMCU:SINGLE:ERROR:GET"));
 			continue;
 		}
 		
@@ -834,6 +842,30 @@ void parseCanGwConnectionStatus(char *serverAnswer) {
 }
 
 
+void parseSingleErrorMessage(char *serverAnswer) {
+	char *answer_p;
+	char new_title[256];
+	int deviceIndex;
+	int p_shift;
+
+	answer_p = serverAnswer;
+	
+	// Device index
+	if (1 != sscanf(answer_p, "%d %n", &deviceIndex, &p_shift)) {
+		msAddMsg(msGMS(), "%s Unable to read the device index. Server answer body: \"%s\"", TimeStamp(0), serverAnswer);
+		return;
+	}
+	answer_p += p_shift;
+	
+	// Update the error message panel's title
+	sprintf(new_title, "Error for \"%s\"", PSMCU_DEV_NAME[deviceIndex]);
+	SetPanelAttribute(errPanelHandle, ATTR_TITLE, new_title);
+	
+	// Clear the previous message and set up a new one
+	ResetTextBox(errPanelHandle, errPanel_textbox, answer_p);
+}
+
+
 // =================================
 // User commands
 // =================================
@@ -847,7 +879,7 @@ void UserSingleReset(int deviceIndex) {
 	// The reset is prohibited if force or current permission is set.
 	if (currentPermission || forcePermission) return;
 	
-	SendRegistersCommand("PSMCU:SINGLE:INTERLOCK:DROP", deviceIndex);
+	SendDeviceCommand("PSMCU:SINGLE:INTERLOCK:DROP", deviceIndex);
 	SetCtrlAttribute(psMcuWindowHandles[deviceIndex], PSMCU_BLOCK_CURRENT_PERM_BTNS[deviceIndex][0], ATTR_DIMMED, 1); 
 	SetCtrlAttribute(psMcuWindowHandles[deviceIndex], PSMCU_BLOCK_FORCE_BTNS[deviceIndex][0], ATTR_DIMMED, 1); 	
 }
@@ -862,13 +894,23 @@ void UserSingleForceOn(int deviceIndex) {
 	if (interlockReset) return;
 	if (currentPermission) return;
 	
-	SendRegistersCommand("PSMCU:SINGLE:FORCE:ON", deviceIndex); 
+	SendDeviceCommand("PSMCU:SINGLE:FORCE:ON", deviceIndex); 
 	SetCtrlAttribute(psMcuWindowHandles[deviceIndex], PSMCU_BLOCK_INTERLOCK_RESET_BTNS[deviceIndex], ATTR_DIMMED, 1);
 }
 
 
 void UserSingleForceOff(int deviceIndex) {
-	SendRegistersCommand("PSMCU:SINGLE:FORCE:OFF", deviceIndex); 
+	SendDeviceCommand("PSMCU:SINGLE:FORCE:OFF", deviceIndex); 
+}
+
+
+void UserSingleGetErrMsg(int deviceIndex) {
+	SendDeviceCommand("PSMCU:SINGLE:ERROR:GET", deviceIndex);
+}
+
+
+void UserSingleClearErr(int deviceIndex) {
+	SendDeviceCommand("PSMCU:SINGLE:ERROR:CLEAR", deviceIndex);
 }
 
 
@@ -883,13 +925,13 @@ void UserSingleCurrentOn(int deviceIndex) {
 	if ( !contactor || !forcePermission ) return;
 	if (DAC_SERVER_READ_VALS[deviceIndex][0] != 0) return; 
 	
-	SendRegistersCommand("PSMCU:SINGLE:PERMISSION:ON", deviceIndex); 
+	SendDeviceCommand("PSMCU:SINGLE:PERMISSION:ON", deviceIndex); 
 	SetCtrlAttribute(psMcuWindowHandles[deviceIndex], PSMCU_BLOCK_INTERLOCK_RESET_BTNS[deviceIndex], ATTR_DIMMED, 1); 
 }
 
 
 void UserSingleCurrentOff(int deviceIndex) {
-	SendRegistersCommand("PSMCU:SINGLE:PERMISSION:OFF", deviceIndex);   
+	SendDeviceCommand("PSMCU:SINGLE:PERMISSION:OFF", deviceIndex);   
 }
 
 
@@ -1375,6 +1417,43 @@ int CVICALLBACK forceOffCmdBtnsCallback (int handle, int control, int event, voi
 	return 0;  	
 }
 
+int CVICALLBACK errShowBtnsCallback (int handle, int control, int event, void *callbackData, int eventData1, int eventData2) { 
+	
+	int deviceIndex;
+	
+	switch (event) {
+		case EVENT_COMMIT:
+			for (deviceIndex=0; deviceIndex < PSMCU_NUM; deviceIndex++) {
+				if (psMcuWindowHandles[deviceIndex] == handle) break;	
+			}
+			if (deviceIndex >= PSMCU_NUM) break;
+			
+			UserSingleGetErrMsg(deviceIndex);
+			DisplayPanel(errPanelHandle);
+			break;
+	}
+	
+	return 0; 
+}
+
+int CVICALLBACK errClearBtnsCallback (int handle, int control, int event, void *callbackData, int eventData1, int eventData2) { 
+	
+	int deviceIndex;
+	
+	switch (event) {
+		case EVENT_COMMIT:
+			for (deviceIndex=0; deviceIndex < PSMCU_NUM; deviceIndex++) {
+				if (psMcuWindowHandles[deviceIndex] == handle) break;	
+			}
+			if (deviceIndex >= PSMCU_NUM) break;
+			
+			UserSingleClearErr(deviceIndex);
+			break;
+	}
+	
+	return 0; 
+}
+
 //////////////////////////////////////////////
 // Main menu callbacks for broadcast commands
 //////////////////////////////////////////////
@@ -1499,4 +1578,55 @@ int CVICALLBACK stopPipelineCallback (int panel, int control, int event, void *c
 	}
 	
 	return 0; 	
+}
+
+void CVICALLBACK menuCommandsClearAllErrors (int menuBar, int menuItem, void *callbackData,
+		int panel)
+{
+	SendBroadcastCommand("PSMCU:ALL:ERROR:CLEAR");
+}
+
+void CVICALLBACK menuExtraReloadNames (int menuBar, int menuItem, void *callbackData,
+		int panel)
+{
+}
+
+void CVICALLBACK debugSetErrorsAll (int menuBar, int menuItem, void *callbackData,
+		int panel)
+{
+	SendBroadcastCommand("PSMCU:ALL:ERROR:SET Error set for all devices!");	
+}
+
+void CVICALLBACK debugSetErrorsSingle (int menuBar, int menuItem, void *callbackData,
+		int panel)
+{
+	SendBroadcastCommand("PSMCU:SINGLE:ERROR:SET 0 Error set for the first device!");
+}
+
+void CVICALLBACK menuProgramSaveView (int menuBar, int menuItem, void *callbackData,
+		int panel)
+{
+}
+
+void CVICALLBACK menuProgramLoadView (int menuBar, int menuItem, void *callbackData,
+		int panel)
+{
+}
+
+int CVICALLBACK errPanelCallback (int panel, int event, void *callbackData,
+		int eventData1, int eventData2)
+{
+	switch (event)
+	{
+		case EVENT_GOT_FOCUS:
+
+			break;
+		case EVENT_LOST_FOCUS:
+
+			break;
+		case EVENT_CLOSE:
+			HidePanel(errPanelHandle);
+			break;
+	}
+	return 0;
 }

@@ -25,6 +25,8 @@
 #define ADC_ELEMENTS_STEP 2
 #define ADC_BUTTON_HEIGHT 20
 #define ADC_BUTTON_WIDTH 20
+#define ERR_BUTTON_HEIGHT 20
+#define ERR_BUTTON_WIDTH 40
 #define DAC_BUTTON_HEIGHT 20
 #define DAC_BUTTON_WIDTH 30 
 #define ADC_FIELD_WIDTH 70
@@ -39,6 +41,7 @@
 
 // Main menu block
 extern int mainMenuHandle;
+extern int errPanelHandle;
 extern int psMcuWindowHandles[PSMCU_MAX_NUM]; 
 
 extern int SERVER_CONNECTION_INDICATOR;
@@ -70,6 +73,8 @@ extern int PSMCU_BLOCK_CURRENT_PERM_BTNS[PSMCU_MAX_NUM][2];
 extern int PSMCU_BLOCK_FORCE_BTNS[PSMCU_MAX_NUM][2];
 extern int PSMCU_BLOCK_ZERO_FAST_BTN[PSMCU_MAX_NUM];
 extern int PSMCU_BLOCK_ERROR_STATE_LED[PSMCU_MAX_NUM];
+extern int PSMCU_BLOCK_ERROR_SHOW_BTN[PSMCU_MAX_NUM];
+extern int PSMCU_BLOCK_ERROR_CLEAR_BTN[PSMCU_MAX_NUM];
  
 
 extern int PSMCU_GRAPHS_WINDOW_HANDLES[PSMCU_MAX_NUM][PSMCU_ADC_CHANNELS_NUM];
@@ -126,6 +131,11 @@ int CVICALLBACK forceOnCmdBtnsCallback (int handle, int control, int event, void
 
 int CVICALLBACK forceOffCmdBtnsCallback (int handle, int control, int event, void *callbackData, 
 									           int eventData1, int eventData2);
+
+
+int CVICALLBACK errShowBtnsCallback (int panel, int control, int event, void *callbackData, int eventData1, int eventData2);
+
+int CVICALLBACK errClearBtnsCallback (int panel, int control, int event, void *callbackData, int eventData1, int eventData2);
 
 int CVICALLBACK zeroSingleFastBtnCallback (int panel, int control, int event, void *callbackData,
 		int eventData1, int eventData2);

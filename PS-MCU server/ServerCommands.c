@@ -145,7 +145,7 @@ void prepareTcpCommand(char *str, int bytes){
 	
 	j = 0;
 	for (i=0; i < bytes; i++) {
-		if (str[i] != 0) str[j++] = toupper(str[i]);
+		if (str[i] != 0) str[j++] = str[i];
 	}
 
 	if (bytes == MAX_RECEIVED_BYTES) str[MAX_RECEIVED_BYTES-1] = 0;
@@ -209,6 +209,13 @@ void dataExchFunc(unsigned handle, char *ip)
 
 parserFunciton getCommandparser(char *command) {
 	int *cmdIndex;
+	char * symbol;
+	
+	symbol = command;
+	while (*symbol != 0) {
+	    *symbol = toupper(*symbol);
+		symbol++;
+	}
 	cmdIndex = map_get(&commandsHashMap, command);
 	if (cmdIndex) return RegisteredParsers[*cmdIndex];
 	

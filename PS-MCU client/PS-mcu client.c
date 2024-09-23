@@ -789,20 +789,6 @@ void parseFullInfo(char *serverAnswer) {
 	
 	SetCtrlVal(mainMenuHandle, PSMCU_BLOCK_OUTREG_DUPLICATE_INDICATORS[deviceIndex][0], (STORED_OUTPUT_REGS[deviceIndex] >> 2) & 1);
 	SetCtrlVal(mainMenuHandle, PSMCU_BLOCK_OUTREG_DUPLICATE_INDICATORS[deviceIndex][1], (STORED_OUTPUT_REGS[deviceIndex] >> 1) & 1);
-	
-	// Resolve command buttons status
-	resolveCommandButtonStatus(deviceIndex, STORED_INPUT_REGS[deviceIndex], STORED_OUTPUT_REGS[deviceIndex], DAC_SERVER_READ_VALS[deviceIndex][0]);
-	
-	// Resolve color indication
-	resolvePsmcuColorIndicators(
-		deviceIndex,
-		STORED_INPUT_REGS[deviceIndex],
-		DAC_CLIENT_SENT_VALUES[deviceIndex][0], 
-		DAC_SERVER_READ_VALS[deviceIndex][0],
-		ADC_STORED_VALS[deviceIndex][CFG_DUPLICATE_ADC_INDEX],
-		CFG_DAC_DAC_MAX_DIFF,
-		CFG_DAC_ADC_MAX_DIFF
-	);
 
 	answer_p += p_shift;  
 	
@@ -821,9 +807,32 @@ void parseFullInfo(char *serverAnswer) {
 		PSMCU_ERROR_STATUS[deviceIndex] = errorStatus;
 		SetCtrlAttribute(mainMenuHandle, PSMCU_BLOCK_ERROR_STATUS_BOX[deviceIndex], ATTR_VISIBLE, errorStatus);
 		SetCtrlVal(psMcuWindowHandles[deviceIndex], PSMCU_BLOCK_ERROR_STATE_LED[deviceIndex], errorStatus);
+		
+		// Change the visibility of buttons for displaying and clearing error messages
+		SetCtrlAttribute(psMcuWindowHandles[deviceIndex], PSMCU_BLOCK_ERROR_SHOW_BTN[deviceIndex], ATTR_VISIBLE, errorStatus);
+		SetCtrlAttribute(psMcuWindowHandles[deviceIndex], PSMCU_BLOCK_ERROR_CLEAR_BTN[deviceIndex], ATTR_VISIBLE, errorStatus);
 	}
 	
 	SetCtrlVal(mainMenuHandle, PSMCU_STATUS_INDICATOR[deviceIndex], PSMCU_ALIVE_STATUS[deviceIndex]);
+	
+	// Resolve command buttons status
+	resolveCommandButtonStatus(
+		deviceIndex,
+		STORED_INPUT_REGS[deviceIndex],
+		STORED_OUTPUT_REGS[deviceIndex],
+		DAC_SERVER_READ_VALS[deviceIndex][0]
+	);
+	
+	// Resolve color indication
+	resolvePsmcuColorIndicators(
+		deviceIndex,
+		STORED_INPUT_REGS[deviceIndex],
+		DAC_CLIENT_SENT_VALUES[deviceIndex][0], 
+		DAC_SERVER_READ_VALS[deviceIndex][0],
+		ADC_STORED_VALS[deviceIndex][CFG_DUPLICATE_ADC_INDEX],
+		CFG_DAC_DAC_MAX_DIFF,
+		CFG_DAC_ADC_MAX_DIFF
+	);
 }
 
 

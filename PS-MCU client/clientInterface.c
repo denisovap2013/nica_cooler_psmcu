@@ -230,11 +230,13 @@ void setupSinglePsMcuGui(int psMcuIndex) {
 	
 	PSMCU_BLOCK_ERROR_SHOW_BTN[i] = NewCtrl(psMcuWindowHandles[i], CTRL_SQUARE_COMMAND_BUTTON_LS, "Show", top, left + 60);
 	SetCtrlAttribute(psMcuWindowHandles[i], PSMCU_BLOCK_ERROR_SHOW_BTN[i], ATTR_HEIGHT, ERR_BUTTON_HEIGHT);
-	SetCtrlAttribute(psMcuWindowHandles[i], PSMCU_BLOCK_ERROR_SHOW_BTN[i], ATTR_WIDTH, ERR_BUTTON_WIDTH); 
+	SetCtrlAttribute(psMcuWindowHandles[i], PSMCU_BLOCK_ERROR_SHOW_BTN[i], ATTR_WIDTH, ERR_BUTTON_WIDTH);
+	SetCtrlAttribute(psMcuWindowHandles[i], PSMCU_BLOCK_ERROR_SHOW_BTN[i], ATTR_VISIBLE, 0); 
 		
     PSMCU_BLOCK_ERROR_CLEAR_BTN[i]= NewCtrl(psMcuWindowHandles[i], CTRL_SQUARE_COMMAND_BUTTON_LS, "Clear", top, left + 60 + ERR_BUTTON_WIDTH + 5);
 	SetCtrlAttribute(psMcuWindowHandles[i], PSMCU_BLOCK_ERROR_CLEAR_BTN[i], ATTR_HEIGHT, ERR_BUTTON_HEIGHT);
-	SetCtrlAttribute(psMcuWindowHandles[i], PSMCU_BLOCK_ERROR_CLEAR_BTN[i], ATTR_WIDTH, ERR_BUTTON_WIDTH); 
+	SetCtrlAttribute(psMcuWindowHandles[i], PSMCU_BLOCK_ERROR_CLEAR_BTN[i], ATTR_WIDTH, ERR_BUTTON_WIDTH);
+	SetCtrlAttribute(psMcuWindowHandles[i], PSMCU_BLOCK_ERROR_CLEAR_BTN[i], ATTR_VISIBLE, 0);
 	
 	// Error buttons callback
 	InstallCtrlCallback(psMcuWindowHandles[i], PSMCU_BLOCK_ERROR_SHOW_BTN[i], errShowBtnsCallback, NULL);

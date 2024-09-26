@@ -35,4 +35,7 @@ void msReleaseGlobalStack(void);
 
 int msMsgsAvailable(message_stack_t msg_stack);
 
+// Wrapper over the global message stack with additionsl timestamp prefix
+void logMessage(char *msg, ...);
+
 #endif  /* ndef __MessageStack_H__ */

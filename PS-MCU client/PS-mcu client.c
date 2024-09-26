@@ -120,6 +120,7 @@ int pipelineGuiLock = 0;
 
 //==============================================================================
 // Global functions
+
 void parseFullInfo(char *);
 void parseCanGwConnectionStatus(char *);
 void parseSingleErrorMessage(char *);
@@ -175,9 +176,16 @@ int main (int argc, char *argv[])
 	initGui();
     /////////////
 	
-    /* display the panel and run the user interface */
+    // Setup the console output
+	SetStdioWindowOptions(2000, 0, 0);
+	SetSystemAttribute(ATTR_TASKBAR_BUTTON_TEXT, title);
+	SetStdioPort(CVI_STDIO_WINDOW);
+	SetStdioWindowVisibility(0);
+
+	// Install the main callback
 	InstallMainCallback(mainSystemCallback,0,0); 
 	
+	/* display the panel and run the user interface */  
     errChk (DisplayPanel (mainMenuHandle));
     errChk (RunUserInterface ());
 
@@ -222,12 +230,12 @@ char* revealEscapeSequences(char *string) {
 
 int checkServerAnswer(char *answer) {
 	if (answer[0] == '!') {
-		msAddMsg(msGMS(), "%s Server answered with the command error: \"%s\"", TimeStamp(0), revealEscapeSequences(answer));
+		logMessage("Server answered with the command error: \"%s\"", revealEscapeSequences(answer));
 		return -1;
 	}
 	
 	if (answer[0] == '?') {
-		msAddMsg(msGMS(), "%s Server did not recognize the command: \"%s\"", TimeStamp(0), revealEscapeSequences(answer));
+		logMessage("Server did not recognize the command: \"%s\"", revealEscapeSequences(answer));
 		return -1;
 	}
 	
@@ -243,21 +251,21 @@ int parseChannelName(char *src, char *prefix, int expectedDevIndex, int expected
 	if (checkServerAnswer(src) < 0) return 0;
 	
 	if (strstr(src, prefix) != src) {
-		msAddMsg(msGMS(), "%s Expected the answer to start with \"%s\", but got \"%s\"", TimeStamp(0), prefix, revealEscapeSequences(src));
+		logMessage("Expected the answer to start with \"%s\", but got \"%s\"", prefix, revealEscapeSequences(src));
 		return 0;	
 	}
 	
 	stringPointer = src + strlen(prefix);
 
 	if (sscanf(stringPointer, "%d %d %n", &deviceIndex, &channel, &readPos) != 2) {
-		msAddMsg(msGMS(), "%s Expected the answer to have a device index and a channel specified, but got \"%s\"", TimeStamp(0), revealEscapeSequences(src));
+		logMessage("Expected the answer to have a device index and a channel specified, but got \"%s\"", revealEscapeSequences(src));
 		return 0;	
 	}
 	
 	stringPointer += readPos;
 	
 	if (deviceIndex != expectedDevIndex || channel != expectedChannel) {
-		msAddMsg(msGMS(), "%s Expected device index and channel to be %d and %d, but got answer \"%s\"", TimeStamp(0), expectedDevIndex, expectedChannel, revealEscapeSequences(src)); 
+		logMessage("Expected device index and channel to be %d and %d, but got answer \"%s\"", expectedDevIndex, expectedChannel, revealEscapeSequences(src)); 
 		return 0;
 	}
 	
@@ -279,7 +287,7 @@ int parseServerName(char *src, char *prefix, char *output) {
 	if (checkServerAnswer(src) < 0) return 0; 
 	
 	if (strstr(src, prefix) != src) {
-		msAddMsg(msGMS(), "%s Expected the answer to start with \"%s\", but got \"%s\"", TimeStamp(0), prefix, revealEscapeSequences(src));
+		logMessage("Expected the answer to start with \"%s\", but got \"%s\"", prefix, revealEscapeSequences(src));
 		return 0;	
 	}
 	
@@ -304,21 +312,21 @@ int parseDeviceName(char *src, char *prefix, int expectedDevIndex, char *output)
 	if (checkServerAnswer(src) < 0) return 0; 
 	
 	if (strstr(src, prefix) != src) {
-		msAddMsg(msGMS(), "%s Expected the answer to start with \"%s\", but got \"%s\"", TimeStamp(0), prefix, revealEscapeSequences(src));
+		logMessage("Expected the answer to start with \"%s\", but got \"%s\"", prefix, revealEscapeSequences(src));
 		return 0;	
 	}
 	
 	stringPointer = src + strlen(prefix);
 
 	if (sscanf(stringPointer, "%d %n", &deviceIndex, &readPos) != 1) {
-		msAddMsg(msGMS(), "%s Expected the answer to have a device index, but got \"%s\"", TimeStamp(0), src);
+		logMessage("Expected the answer to have a device index, but got \"%s\"", src);
 		return 0;	
 	}
 	
 	stringPointer += readPos;
 	
 	if (deviceIndex != expectedDevIndex) {
-		msAddMsg(msGMS(), "%s Expected device index to be %d, but got answer \"%s\"", TimeStamp(0), expectedDevIndex, revealEscapeSequences(src)); 
+		logMessage("Expected device index to be %d, but got answer \"%s\"", expectedDevIndex, revealEscapeSequences(src)); 
 		return 0;
 	}
 	
@@ -730,7 +738,7 @@ void parseUbsIncomingCommand(char *command, int bytes) {
 			continue;
 		}
 		
-		msAddMsg(msGMS(), "%s Cannot handle the server answer \"%s\"", TimeStamp(0), subcommand);  
+		logMessage("Cannot handle the server answer \"%s\"", subcommand);  
 	}
 }
 
@@ -745,7 +753,7 @@ void parseFullInfo(char *serverAnswer) {
 	
 	// Device index
 	if (1 != sscanf(answer_p, "%d %n", &deviceIndex, &p_shift)) {
-		msAddMsg(msGMS(), "%s Unable to read the device index. Server answer body: \"%s\"", TimeStamp(0), serverAnswer);
+		logMessage("Unable to read the device index. Server answer body: \"%s\"", serverAnswer);
 		return;
 	}
 	answer_p += p_shift;
@@ -753,7 +761,7 @@ void parseFullInfo(char *serverAnswer) {
 	// ADC
 	for (chIndex=0; chIndex < PSMCU_ADC_CHANNELS_NUM; chIndex++) {
 		if (1 != sscanf(answer_p, "%lf %n", &ADC_STORED_VALS[deviceIndex][chIndex], &p_shift)) {
-			msAddMsg(msGMS(), "%s Unable to read the ADC values. ch: %d. Server answer body: \"%s\"", TimeStamp(0), chIndex, serverAnswer);
+			logMessage("Unable to read the ADC values. ch: %d. Server answer body: \"%s\"", chIndex, serverAnswer);
 			return;
 		}
 		SetCtrlVal(psMcuWindowHandles[deviceIndex], PSMCU_BLOCK_ADC_FIELDS[deviceIndex][chIndex], ADC_STORED_VALS[deviceIndex][chIndex]); 
@@ -765,7 +773,7 @@ void parseFullInfo(char *serverAnswer) {
 	// DAC
 	for (chIndex=0; chIndex < PSMCU_DAC_CHANNELS_NUM; chIndex++) {
 		if (1 != sscanf(answer_p, "%lf %n", &DAC_SERVER_READ_VALS[deviceIndex][chIndex], &p_shift)) {
-			msAddMsg(msGMS(), "%s Unable to read the DAC values. ch: %d. Server answer body: \"%s\"", TimeStamp(0), chIndex, serverAnswer);
+			logMessage("Unable to read the DAC values. ch: %d. Server answer body: \"%s\"", chIndex, serverAnswer);
 			return;
 		}
 		SetCtrlVal(psMcuWindowHandles[deviceIndex], PSMCU_BLOCK_DAC_CONF_FIELDS[deviceIndex][chIndex], DAC_SERVER_READ_VALS[deviceIndex][chIndex]); 
@@ -774,7 +782,7 @@ void parseFullInfo(char *serverAnswer) {
 	
 	// Input registers, output registers
 	if (2 != sscanf(answer_p, "%X %X %n", &STORED_INPUT_REGS[deviceIndex], &STORED_OUTPUT_REGS[deviceIndex], &p_shift)) {
-		msAddMsg(msGMS(), "%s Unable to read the registers data. Server answer body: \"%s\"", TimeStamp(0), serverAnswer);
+		logMessage("Unable to read the registers data. Server answer body: \"%s\"", serverAnswer);
 		return;
 	}
 
@@ -794,7 +802,7 @@ void parseFullInfo(char *serverAnswer) {
 	
 	// Parse device state (1st bit - alive status, 2nd bit - error status)
 	if (1 != sscanf(answer_p, "%X", &deviceState)) {
-		msAddMsg(msGMS(), "%s Unable to read the alive status. Server answer body: \"%s\"", TimeStamp(0), serverAnswer);
+		logMessage("Unable to read the alive status. Server answer body: \"%s\"", serverAnswer);
 		return;
 	}
 	
@@ -838,7 +846,7 @@ void parseFullInfo(char *serverAnswer) {
 
 void parseCanGwConnectionStatus(char *serverAnswer) {
 	if (1 != sscanf(serverAnswer, "%d", &canGwConnectionStatus)) {
-		msAddMsg(msGMS(), "%s Unable to read the connection status. Server answer body: \"%s\"", TimeStamp(0), serverAnswer);
+		logMessage("Unable to read the connection status. Server answer body: \"%s\"", serverAnswer);
 		return;
 	}
 	
@@ -861,7 +869,7 @@ void parseSingleErrorMessage(char *serverAnswer) {
 	
 	// Device index
 	if (1 != sscanf(answer_p, "%d %n", &deviceIndex, &p_shift)) {
-		msAddMsg(msGMS(), "%s Unable to read the device index. Server answer body: \"%s\"", TimeStamp(0), serverAnswer);
+		logMessage("Unable to read the device index. Server answer body: \"%s\"", serverAnswer);
 		return;
 	}
 	answer_p += p_shift;
@@ -890,7 +898,8 @@ void UserSingleReset(int deviceIndex) {
 	
 	SendDeviceCommand("PSMCU:SINGLE:INTERLOCK:DROP", deviceIndex);
 	SetCtrlAttribute(psMcuWindowHandles[deviceIndex], PSMCU_BLOCK_CURRENT_PERM_BTNS[deviceIndex][0], ATTR_DIMMED, 1); 
-	SetCtrlAttribute(psMcuWindowHandles[deviceIndex], PSMCU_BLOCK_FORCE_BTNS[deviceIndex][0], ATTR_DIMMED, 1); 	
+	SetCtrlAttribute(psMcuWindowHandles[deviceIndex], PSMCU_BLOCK_FORCE_BTNS[deviceIndex][0], ATTR_DIMMED, 1); 
+	logMessage("Send reset signal to '%s'", PSMCU_DEV_NAME[deviceIndex]);
 }
 
 
@@ -905,11 +914,13 @@ void UserSingleForceOn(int deviceIndex) {
 	
 	SendDeviceCommand("PSMCU:SINGLE:FORCE:ON", deviceIndex); 
 	SetCtrlAttribute(psMcuWindowHandles[deviceIndex], PSMCU_BLOCK_INTERLOCK_RESET_BTNS[deviceIndex], ATTR_DIMMED, 1);
+	logMessage("Send force:on signal to '%s'", PSMCU_DEV_NAME[deviceIndex]);
 }
 
 
 void UserSingleForceOff(int deviceIndex) {
-	SendDeviceCommand("PSMCU:SINGLE:FORCE:OFF", deviceIndex); 
+	SendDeviceCommand("PSMCU:SINGLE:FORCE:OFF", deviceIndex);
+	logMessage("Send force:off signal to '%s'", PSMCU_DEV_NAME[deviceIndex]);
 }
 
 
@@ -920,6 +931,7 @@ void UserSingleGetErrMsg(int deviceIndex) {
 
 void UserSingleClearErr(int deviceIndex) {
 	SendDeviceCommand("PSMCU:SINGLE:ERROR:CLEAR", deviceIndex);
+	logMessage("Send request to clear error message for '%s'", PSMCU_DEV_NAME[deviceIndex]);
 }
 
 
@@ -935,12 +947,14 @@ void UserSingleCurrentOn(int deviceIndex) {
 	if (DAC_SERVER_READ_VALS[deviceIndex][0] != 0) return; 
 	
 	SendDeviceCommand("PSMCU:SINGLE:PERMISSION:ON", deviceIndex); 
-	SetCtrlAttribute(psMcuWindowHandles[deviceIndex], PSMCU_BLOCK_INTERLOCK_RESET_BTNS[deviceIndex], ATTR_DIMMED, 1); 
+	SetCtrlAttribute(psMcuWindowHandles[deviceIndex], PSMCU_BLOCK_INTERLOCK_RESET_BTNS[deviceIndex], ATTR_DIMMED, 1);
+	logMessage("Send current:on signal to '%s'", PSMCU_DEV_NAME[deviceIndex]);
 }
 
 
 void UserSingleCurrentOff(int deviceIndex) {
-	SendDeviceCommand("PSMCU:SINGLE:PERMISSION:OFF", deviceIndex);   
+	SendDeviceCommand("PSMCU:SINGLE:PERMISSION:OFF", deviceIndex);
+	logMessage("Send current:off signal to '%s'", PSMCU_DEV_NAME[deviceIndex]);
 }
 
 
@@ -1031,14 +1045,18 @@ void dacSetInOrder(double dacStates[PSMCU_MAX_NUM], double timeDelay_sec[PSMCU_M
 	}
 	
 	for (orderIndex=0; orderIndex < PSMCU_NUM; orderIndex++) {
-		if (pipelineBreakFlag) goto pipelineEnd;
+		if (pipelineBreakFlag) {
+			logMessage("Loading stopped by the user.");
+			goto pipelineEnd;
+		}
 
 		if (reversed) {
 			deviceIndex = PSMCU_DEVICES_ORDER[PSMCU_NUM - orderIndex - 1];  	
 		} else {
 			deviceIndex = PSMCU_DEVICES_ORDER[orderIndex];  	
 		}
-		
+
+		logMessage("Sending value %f to the DAC of '%s'.", dacStates[deviceIndex], PSMCU_DEV_NAME[deviceIndex]); 
 		UserSingleDacSet(deviceIndex, 0, dacStates[deviceIndex]);
 		SetCtrlAttribute(mainMenuHandle, PSMCU_ORDER_LABELS[deviceIndex], ATTR_TEXT_BGCOLOR, MakeColor(145,255,145));
 		
@@ -1047,11 +1065,16 @@ void dacSetInOrder(double dacStates[PSMCU_MAX_NUM], double timeDelay_sec[PSMCU_M
 		start = clock();
 		while (clock() - start < clocksToWait) {
 			ProcessSystemEvents();
-			if (pipelineBreakFlag) goto pipelineEnd;
+			if (pipelineBreakFlag) {
+				logMessage("Loading stopped by the user.");
+				goto pipelineEnd;
+			}
 		}
 		
 		SetCtrlAttribute(mainMenuHandle, PSMCU_ORDER_LABELS[deviceIndex], ATTR_TEXT_BGCOLOR, VAL_TRANSPARENT);
 	}
+	
+	logMessage("Loaded setup successfully.");
 	
 	pipelineEnd:
 
@@ -1144,6 +1167,7 @@ int CVICALLBACK dacFieldCallback (int panel, int control, int event, void *callb
 				for (deviceIndex=0; deviceIndex < PSMCU_NUM; deviceIndex++) {
 					if (PSMCU_BLOCK_DAC_DUPLICATE_FIELDS[deviceIndex] == control) {
 						GetCtrlVal(panel, control, &dacValueToWrite);
+						logMessage("Sending value %f to the DAC of '%s' via main control window.", dacValueToWrite, PSMCU_DEV_NAME[deviceIndex]);
 						UserSingleDacSet(deviceIndex, CFG_DUPLICATE_DAC_INDEX, dacValueToWrite); 
 						break;
 					}
@@ -1154,6 +1178,7 @@ int CVICALLBACK dacFieldCallback (int panel, int control, int event, void *callb
 						for (channelIndex=0; channelIndex < PSMCU_DAC_CHANNELS_NUM; channelIndex++) {
 							if (PSMCU_BLOCK_DAC_FIELDS[deviceIndex][channelIndex] == control) {
 								GetCtrlVal(panel, control, &dacValueToWrite);
+								logMessage("Sending value %f to the DAC of '%s' via device's control window.", dacValueToWrite, PSMCU_DEV_NAME[deviceIndex]);
 								UserSingleDacSet(deviceIndex, channelIndex, dacValueToWrite);
 								break;
 							}
@@ -1176,6 +1201,7 @@ int CVICALLBACK zeroSingleFastBtnCallback (int panel, int control, int event, vo
 		case EVENT_LEFT_DOUBLE_CLICK:
 			for (deviceIndex=0; deviceIndex < PSMCU_NUM; deviceIndex++) {
 				if (PSMCU_BLOCK_ZERO_FAST_BTN[deviceIndex] == control) {
+					logMessage("Used button 'Zero DAC :: fast' for '%s'", PSMCU_DEV_NAME[deviceIndex]);
 					UserSingleZeroDacFast(deviceIndex);
 					break;
 				}
@@ -1232,13 +1258,13 @@ int CVICALLBACK tick (int panel, int control, int event,
 				connectionWait++;
 				if (connectionWait * TIMER_TICK_TIME >= CFG_SERVER_CONNECTION_INTERVAL) {
 					connectionWait = 0;
-					msAddMsg(msGMS(),"%s Connection to the server (\"%s:%d\") ...", TimeStamp(0), CFG_SERVER_IP, CFG_SERVER_PORT);
+					logMessage("Connection to the server (\"%s:%d\") ...", CFG_SERVER_IP, CFG_SERVER_PORT);
 					if (initConnectionToServer() >= 0) {
 						connectionEstablished = 1;
 						
 						SetCtrlVal(mainMenuHandle, SERVER_CONNECTION_INDICATOR, 1);
 						SetCtrlAttribute(mainMenuHandle, SERVER_CONNECTION_INDICATOR, ATTR_LABEL_TEXT, SERVER_INDICATOR_ONLINE_LABEL);
-						msAddMsg(msGMS(), "%s Connection to the server is established.", TimeStamp(0));
+						logMessage("Connection to the server is established.");
 						
 						RequestNames();
 						
@@ -1248,11 +1274,12 @@ int CVICALLBACK tick (int panel, int control, int event,
 						}
 						
 					} else {
-						msAddMsg(msGMS(),"%s Connection to the server failed. Next connection request in %.1fs.", TimeStamp(0), CFG_SERVER_CONNECTION_INTERVAL);
+						logMessage("Connection to the server failed. Next connection request in %.1fs.", CFG_SERVER_CONNECTION_INTERVAL);
 					}
 				}
 			}
 			if (msMsgsAvailable(msGMS())) {
+				msPrintMsgs(msGMS(), stdout);
 				WriteLogFiles(msGMS(), CFG_LOG_DIRECTORY, logFileName);
 				msFlushMsgs(msGMS());
 			}
@@ -1295,7 +1322,7 @@ int clientCallbackFunction(unsigned handle, int xType, int errCode, void * callb
 			
 			SetCtrlVal(mainMenuHandle, SERVER_CONNECTION_INDICATOR, 0);
 			SetCtrlAttribute(mainMenuHandle, SERVER_CONNECTION_INDICATOR, ATTR_LABEL_TEXT, SERVER_INDICATOR_OFFLINE_LABEL);
-			msAddMsg(msGMS(),"%s Connection to the server has lost. Next connection request in %.1fs.", TimeStamp(0), CFG_SERVER_CONNECTION_INTERVAL);
+			logMessage("Connection to the server has lost. Next connection request in %.1fs.", CFG_SERVER_CONNECTION_INTERVAL);
 			break;
 		case TCP_DATAREADY:
 			switch (globalWaitingForAnswer){
@@ -1494,6 +1521,7 @@ int CVICALLBACK zeroAllSmartBtnCallback (int panel, int control, int event, void
 		int eventData1, int eventData2) {
 	switch (event) {
 		case EVENT_LEFT_DOUBLE_CLICK:
+			logMessage("Used broadcast button 'Zero all DAC :: auto'");
 			UserAllZeroDacSmart();
 			break;
 	}
@@ -1510,6 +1538,7 @@ int CVICALLBACK zeroAllFastBtnCallback (int panel, int control, int event, void 
 		int eventData1, int eventData2) {
 	switch (event) {
 		case EVENT_LEFT_DOUBLE_CLICK:
+			logMessage("Used broadcast button 'Zero all DAC :: fast'");
 			UserAllZeroDacFast();
 			break;
 	}
@@ -1522,6 +1551,7 @@ int CVICALLBACK allResetBtnCallback (int panel, int control, int event, void *ca
 		int eventData1, int eventData2) {
 	switch (event) {
 		case BROADCAST_TARGET_EVENT:
+			logMessage("Used broadcast button 'Reset All'");
 			UserAllReset();
 			break;
 	}
@@ -1534,6 +1564,7 @@ int CVICALLBACK allForceOnBtnCallback (int panel, int control, int event, void *
 		int eventData1, int eventData2) {
 	switch (event) {
 		case BROADCAST_TARGET_EVENT:
+			logMessage("Used broadcast button 'Force On'"); 
 			UserAllForceOn();
 			break;
 	}
@@ -1546,6 +1577,7 @@ int CVICALLBACK allForceOffBtnCallback (int panel, int control, int event, void 
 		int eventData1, int eventData2) {
 	switch (event) {
 		case BROADCAST_TARGET_EVENT:
+			logMessage("Used broadcast button 'Force Off'");
 			UserAllForceOff();
 			break;
 	}
@@ -1558,6 +1590,7 @@ int CVICALLBACK allCurrentOnBtnCallback (int panel, int control, int event, void
 		int eventData1, int eventData2) {
 	switch (event) {
 		case BROADCAST_TARGET_EVENT:
+			logMessage("Used broadcast button 'Current On'");
 			UserAllCurrentOn();
 			break;
 	}
@@ -1570,6 +1603,7 @@ int CVICALLBACK allCurrentOffBtnCallback (int panel, int control, int event, voi
 		int eventData1, int eventData2) {
 	switch (event) {
 		case BROADCAST_TARGET_EVENT:
+			logMessage("Used broadcast button 'Current Off'");
 			UserAllCurrentOff();
 			break;
 	}
@@ -1593,6 +1627,7 @@ void CVICALLBACK menuCommandsClearAllErrors (int menuBar, int menuItem, void *ca
 		int panel)
 {
 	SendBroadcastCommand("PSMCU:ALL:ERROR:CLEAR");
+	logMessage("Send request to clear error messages for all devices.");
 }
 
 void CVICALLBACK menuExtraReloadNames (int menuBar, int menuItem, void *callbackData,
@@ -1638,4 +1673,18 @@ int CVICALLBACK errPanelCallback (int panel, int event, void *callbackData,
 			break;
 	}
 	return 0;
+}
+
+void CVICALLBACK ShowHideConsole (int menuBar, int menuItem, void *callbackData,
+		int panel)
+{
+	int visible = 0;
+	
+	GetStdioWindowVisibility(&visible);
+	
+	if (visible) {
+		SetStdioWindowVisibility(0);
+	} else {
+		SetStdioWindowVisibility(1);
+	}
 }

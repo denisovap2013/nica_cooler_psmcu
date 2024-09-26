@@ -16,6 +16,7 @@
 
 #include "LoadSave.h"
 #include "clientData.h"
+#include "MessageStack.h"
 
 //==============================================================================
 // Constants
@@ -60,6 +61,8 @@ void SaveCurrentState(void) {
 		return;
 	}
 	
+	logMessage("Saved DAC configuration to '%s'", file_path);
+	
 	// Free the resources
 	Ini_Dispose(iniText);
 }
@@ -95,6 +98,7 @@ void LoadCurrentState(void (*dacSetupFunction)(double dacStates[PSMCU_MAX_NUM]))
 	}
 	
 	// Call the user specified function
+	logMessage("Loading DAC configuration from '%s'", file_path);
 	dacSetupFunction(currents);
 	
 	// Free the resources

@@ -35,14 +35,16 @@
 #define  BAR_PROGRAM_MENU                 2
 #define  BAR_PROGRAM_MENU_SAVE_VIEW       3       /* callback function: menuProgramSaveView */
 #define  BAR_PROGRAM_MENU_LOAD_VIEW       4       /* callback function: menuProgramLoadView */
-#define  BAR_COMMANDS                     5
-#define  BAR_COMMANDS_CLEAR_ERRS          6       /* callback function: menuCommandsClearAllErrors */
-#define  BAR_COMMANDS_ITEM1               7       /* callback function: debugSetErrorsAll */
-#define  BAR_COMMANDS_ITEM2               8       /* callback function: debugSetErrorsSingle */
-#define  BAR_COMMANDS_SEPARATOR           9
-#define  BAR_COMMANDS_EXTRA               10
-#define  BAR_COMMANDS_EXTRA_SUBMENU       11
-#define  BAR_COMMANDS_EXTRA_RELOAD_NAMES  12      /* callback function: menuExtraReloadNames */
+#define  BAR_PROGRAM_MENU_SEPARATOR_2     5
+#define  BAR_PROGRAM_MENU_CONSOLE_VIEW    6       /* callback function: ShowHideConsole */
+#define  BAR_COMMANDS                     7
+#define  BAR_COMMANDS_CLEAR_ERRS          8       /* callback function: menuCommandsClearAllErrors */
+#define  BAR_COMMANDS_ITEM1               9       /* callback function: debugSetErrorsAll */
+#define  BAR_COMMANDS_ITEM2               10      /* callback function: debugSetErrorsSingle */
+#define  BAR_COMMANDS_SEPARATOR           11
+#define  BAR_COMMANDS_EXTRA               12
+#define  BAR_COMMANDS_EXTRA_SUBMENU       13
+#define  BAR_COMMANDS_EXTRA_RELOAD_NAMES  14      /* callback function: menuExtraReloadNames */
 
 
      /* Callback Prototypes: */
@@ -58,6 +60,7 @@ void CVICALLBACK menuExtraReloadNames(int menubar, int menuItem, void *callbackD
 void CVICALLBACK menuProgramLoadView(int menubar, int menuItem, void *callbackData, int panel);
 void CVICALLBACK menuProgramSaveView(int menubar, int menuItem, void *callbackData, int panel);
 int  CVICALLBACK panelCB(int panel, int event, void *callbackData, int eventData1, int eventData2);
+void CVICALLBACK ShowHideConsole(int menubar, int menuItem, void *callbackData, int panel);
 int  CVICALLBACK tick(int panel, int control, int event, void *callbackData, int eventData1, int eventData2);
 
 

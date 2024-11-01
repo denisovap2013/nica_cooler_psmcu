@@ -168,7 +168,13 @@ void serverReconnection(int timerHandle, int cgwIndex) {
 
 	if (cgwConnectionBroken[cgwIndex]) {
 		if (cgwConnection_Init(cgwIndex) < CANGW_NOERR) {
-			msAddMsg(msGMS(), "%s [CANGW] [%s] Next connection request will be in 5 seconds.", TimeStamp(0), CFG_CANGW_BLOCK_NAME[cgwIndex]); 
+			msAddMsg(
+				msGMS(),
+				"%s [CANGW] [%s] Next connection request will be in %d seconds.",
+				TimeStamp(0),
+				CFG_CANGW_BLOCK_NAME[cgwIndex],
+				CFG_CANGW_RECONNECTION_DELAY[cgwIndex]
+			); 
 			
 		} else {
 			// Successfully connected
@@ -396,8 +402,8 @@ int main(int argc, char **argv) {
 	sprintf(serverName, "Server: %s", CFG_SERVER_NAME);
 	
 	SetStdioWindowOptions(2000, 0, 0);
-	SetSystemAttribute(ATTR_TASKBAR_BUTTON_TEXT, serverName);
 	SetStdioPort(CVI_STDIO_WINDOW);
+	SetSystemAttribute(ATTR_TASKBAR_BUTTON_TEXT, serverName);
 	SetStdioWindowVisibility(1);
 	SetSleepPolicy(VAL_SLEEP_NONE);
 	InstallMainCallback(userMainCallback, 0, 0);  

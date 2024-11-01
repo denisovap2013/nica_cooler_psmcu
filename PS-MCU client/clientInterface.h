@@ -78,6 +78,7 @@ extern int PSMCU_BLOCK_ERROR_CLEAR_BTN[PSMCU_MAX_NUM];
  
 
 extern int PSMCU_GRAPHS_WINDOW_HANDLES[PSMCU_MAX_NUM][PSMCU_ADC_CHANNELS_NUM];
+extern double PSMCU_GRAPHS_RANGES[PSMCU_MAX_NUM][PSMCU_ADC_CHANNELS_NUM][2]; 
 
 //==============================================================================
 // Global functions
@@ -101,6 +102,10 @@ void resolvePsmcuColorIndicators(
 
 void UpdateDeviceName(int deviceIndex, char *name);
 void UpdateGraphTitle(int deviceIndex, int channelIndex);
+void ShowGraphWindow(int deviceIndex, int channelIndex);
+void UpdateGraphPlotRange(int deviceIndex, int channelIndex);
+void CloseGraphWindow(int deviceIndex, int channelIndex);
+void PlaceGraphWindow(int deviceIndex, int channelIndex, int top, int left, int width, int height);
 
 int CVICALLBACK mainMenuButtonCallback (int panel, int control, int event, void *callbackData,
 		int eventData1, int eventData2);

@@ -12,6 +12,7 @@
 // Include files
 
 #include <tcpsupp.h>
+#include "inifile.h"
 #include <ansi_c.h>
 #include <cvirte.h>     
 #include <userint.h>
@@ -1650,11 +1651,215 @@ void CVICALLBACK debugSetErrorsSingle (int menuBar, int menuItem, void *callback
 void CVICALLBACK menuProgramSaveView (int menuBar, int menuItem, void *callbackData,
 		int panel)
 {
+	int blockIndex, chIndex;
+	char file_path[1024];
+	IniText iniText; 
+	char section[256];
+	char k_visibility[16], k_top[16], k_left[16], k_min[16], k_max[16];
+	char k_width[16], k_height[16], k_opened[16];
+	int val_int, handle;
+	
+	if (FileSelectPopup("", "*.view", "*.view", "Select the view file", VAL_SAVE_BUTTON, 0, 1, 1, 1, file_path) == 0) return;
+	
+	iniText = Ini_New(0);
+	
+	// Save app identifier for the view
+	Ini_PutString(iniText, "General", "app", "psmcu-client");
+	
+	strcpy(k_visibility, "visible");
+	strcpy(k_top, "top");
+	strcpy(k_left, "left");
+	strcpy(k_min, "min");
+	strcpy(k_max, "max");
+	strcpy(k_width, "width");
+	strcpy(k_height, "height");
+	strcpy(k_opened, "opened");
+	
+	strcpy(section, "MainWindow");
+	// Save main window parameters
+	// left, top, number of blocks
+	Ini_PutInt(iniText, section, "blocks_num", PSMCU_NUM);
+	GetPanelAttribute(mainMenuHandle, ATTR_TOP, &val_int);
+	Ini_PutInt(iniText, section, k_top, val_int);
+	GetPanelAttribute(mainMenuHandle, ATTR_LEFT, &val_int);
+	Ini_PutInt(iniText, section, k_left, val_int);
+	
+	for (blockIndex=0; blockIndex < PSMCU_NUM; blockIndex++) {
+        // Save visibility and position of the window itself
+		sprintf(section, "block-%d", blockIndex);
+		GetPanelAttribute(psMcuWindowHandles[blockIndex], ATTR_TOP, &val_int);
+		Ini_PutInt(iniText, section, k_top, val_int);
+		GetPanelAttribute(psMcuWindowHandles[blockIndex], ATTR_LEFT, &val_int);
+		Ini_PutInt(iniText, section, k_left, val_int);
+		GetPanelAttribute(psMcuWindowHandles[blockIndex], ATTR_VISIBLE, &val_int);
+		Ini_PutInt(iniText, section, k_visibility, val_int);
+		
+		
+		// Get the parameters of each graph plot
+		for (chIndex=0; chIndex < PSMCU_ADC_CHANNELS_NUM; chIndex++) {
+			handle = PSMCU_GRAPHS_WINDOW_HANDLES[blockIndex][chIndex];
+			
+			sprintf(section, "block-%d-plot-%d", blockIndex, chIndex);
+			Ini_PutInt(iniText, section, k_opened, handle >= 0);
+			
+			if (handle < 0) {
+			    // Window is closed	
+				Ini_PutInt(iniText, section, k_visibility, 0);
+				Ini_PutInt(iniText, section, k_top, 0);
+				Ini_PutInt(iniText, section, k_left, 0);
+				Ini_PutInt(iniText, section, k_width, 0);
+				Ini_PutInt(iniText, section, k_height, 0);
+
+				// Ranges
+				Ini_PutDouble(iniText, section, k_min, PSMCU_GRAPHS_RANGES[blockIndex][chIndex][0]);
+				Ini_PutDouble(iniText, section, k_max, PSMCU_GRAPHS_RANGES[blockIndex][chIndex][1]);
+			} else {
+			    // Window is opened
+				
+				// Visibility, position and size 
+				GetPanelAttribute(handle, ATTR_VISIBLE, &val_int);
+				Ini_PutInt(iniText, section, k_visibility, val_int);
+				GetPanelAttribute(handle, ATTR_TOP, &val_int);
+				Ini_PutInt(iniText, section, k_top, val_int);
+				GetPanelAttribute(handle, ATTR_LEFT, &val_int);
+				Ini_PutInt(iniText, section, k_left, val_int);
+				GetPanelAttribute(handle, ATTR_WIDTH, &val_int); 
+				Ini_PutInt(iniText, section, k_width, val_int);
+				GetPanelAttribute(handle, ATTR_HEIGHT, &val_int); 
+				Ini_PutInt(iniText, section, k_height, val_int);
+				
+				// Ranges
+				Ini_PutDouble(iniText, section, k_min, PSMCU_GRAPHS_RANGES[blockIndex][chIndex][0]);
+				Ini_PutDouble(iniText, section, k_max, PSMCU_GRAPHS_RANGES[blockIndex][chIndex][1]);
+			}
+			
+		}
+
+	}
+	
+	// Trying to open the file for writing
+	if( Ini_WriteToFile(iniText, file_path) < 0 ) {
+		MessagePopup("Unable to save the program's view", "Unable to open the specified file for writing.");
+		Ini_Dispose(iniText);
+		return;
+	}
+	
+	logMessage("Saved program's view to '%s'", file_path);
+	
+	// Free the resources
+	Ini_Dispose(iniText);
+	
 }
 
 void CVICALLBACK menuProgramLoadView (int menuBar, int menuItem, void *callbackData,
 		int panel)
 {
+	int blocks_num;
+	int blockIndex, chIndex;
+	char file_path[1024];
+	char app_name[256], msg[256];
+	IniText iniText; 
+	char section[256];
+	char k_visibility[16], k_top[16], k_left[16], k_min[16], k_max[16];
+	char k_width[16], k_height[16], k_opened[16];
+
+	int visible, top, left, width, height;
+
+	if (FileSelectPopup("", "*.view", "*.view", "Select the view file", VAL_LOAD_BUTTON, 0, 1, 1, 1, file_path) == 0) return; 
+	
+	iniText = Ini_New(0);
+	
+	#define STOP_CONFIGURATION(s, k) sprintf(msg, "Cannot read '%s' from the '%s' section.", (k), (s)); MessagePopup("View configuration Error", msg); Ini_Dispose(iniText); return;
+    #define READ_INT(s, k, var) if(Ini_GetInt(iniText, (s), (k), &(var)) <= 0) {STOP_CONFIGURATION((s), (k));}
+	#define READ_DOUBLE(s, k, var) if(Ini_GetDouble(iniText, (s), (k), &(var)) <= 0) {STOP_CONFIGURATION((s), (k));}
+	
+	// Trying to open the file for reading
+	if( Ini_ReadFromFile(iniText, file_path) != 0 ) {
+		MessagePopup("Unable to load the program's view", "Unable to open the specified file for reading.");
+		Ini_Dispose(iniText);
+		return;
+	}
+	
+	logMessage("Loading the program's view from '%s'", file_path);
+	
+	// Load and chech the app identifier for the view
+	Ini_GetStringIntoBuffer(iniText, "General", "app", app_name, 256);
+	if (strcmp(app_name, "psmcu-client") != 0) {
+		logMessage("Unable to load the program's view. Expected app name 'psmcu-client', got '%s'", app_name);
+	    MessagePopup("Unable to load the program's view", "The program app type is incorrect. Expected 'psmcu-client'.");
+		Ini_Dispose(iniText);
+		return;	
+	}
+	
+	strcpy(k_visibility, "visible");
+	strcpy(k_top, "top");
+	strcpy(k_left, "left");
+	strcpy(k_min, "min");
+	strcpy(k_max, "max");
+	strcpy(k_width, "width");
+	strcpy(k_height, "height");
+	strcpy(k_opened, "opened");
+	
+	// Load parameters of the main window (left, top, number of blocks)
+	strcpy(section, "MainWindow");
+
+	READ_INT(section, "blocks_num", blocks_num);
+	if (blocks_num != PSMCU_NUM) {
+		logMessage("The number of blocks in the view configuration file (%d) is different from the number of blocks (%d) in client configuration.", blocks_num, PSMCU_NUM);	
+	}
+	
+    // Using the minimum value between PSMCU_NUM and blocks_num
+	if (blocks_num > PSMCU_NUM) blocks_num = PSMCU_NUM;
+	
+	READ_INT(section, k_top, top);
+	READ_INT(section, k_left, left);
+	SetPanelAttribute(mainMenuHandle, ATTR_TOP, top);
+	SetPanelAttribute(mainMenuHandle, ATTR_LEFT, left);
+	
+	// Loading blocks view
+	for (blockIndex=0; blockIndex < blocks_num; blockIndex++) {
+		// Load visibility and position of the window itself
+		sprintf(section, "block-%d", blockIndex);
+
+		READ_INT(section, k_top, top);
+		SetPanelAttribute(psMcuWindowHandles[blockIndex], ATTR_TOP, top);
+
+		READ_INT(section, k_left, left);
+		SetPanelAttribute(psMcuWindowHandles[blockIndex], ATTR_LEFT, left);
+		
+		READ_INT(section, k_visibility, visible); 
+		SetPanelAttribute(psMcuWindowHandles[blockIndex], ATTR_VISIBLE, visible);
+		
+		// Setup graph windows for each block
+		for (chIndex=0; chIndex < PSMCU_ADC_CHANNELS_NUM; chIndex++) {
+			sprintf(section, "block-%d-plot-%d", blockIndex, chIndex);
+			
+			// Read ranges
+			READ_DOUBLE(section, k_min, PSMCU_GRAPHS_RANGES[blockIndex][chIndex][0]);
+			READ_DOUBLE(section, k_max, PSMCU_GRAPHS_RANGES[blockIndex][chIndex][1]);
+			
+			// Read visibility
+		    READ_INT(section, k_visibility, visible);
+			
+			// If visible, display the window, if it is not yet displayed. Otherwise, close the window.
+			if (visible) {
+				ShowGraphWindow(blockIndex, chIndex);
+				
+				READ_INT(section, k_top, top);
+				READ_INT(section, k_left, left);
+				READ_INT(section, k_width, width);
+				READ_INT(section, k_height, height);
+				
+				PlaceGraphWindow(blockIndex, chIndex, top, left, width, height);
+			} else {
+				CloseGraphWindow(blockIndex, chIndex);	
+			}
+		}
+	}
+	
+	// Finish the loading
+	Ini_Dispose(iniText);
+	return;	
 }
 
 int CVICALLBACK errPanelCallback (int panel, int event, void *callbackData,

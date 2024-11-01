@@ -59,6 +59,7 @@ int PSMCU_BLOCK_ERROR_SHOW_BTN[PSMCU_MAX_NUM];
 int PSMCU_BLOCK_ERROR_CLEAR_BTN[PSMCU_MAX_NUM];
 
 int PSMCU_GRAPHS_WINDOW_HANDLES[PSMCU_MAX_NUM][PSMCU_ADC_CHANNELS_NUM];
+double PSMCU_GRAPHS_RANGES[PSMCU_MAX_NUM][PSMCU_ADC_CHANNELS_NUM][2];
 
 //==============================================================================
 
@@ -172,7 +173,10 @@ void setupSinglePsMcuGui(int psMcuIndex) {
 	top += 20; 
 	
 	for (j=0; j < PSMCU_ADC_CHANNELS_NUM; j++) {
-		PSMCU_GRAPHS_WINDOW_HANDLES[i][j] = -1;	
+		// Graph window settings
+		PSMCU_GRAPHS_WINDOW_HANDLES[i][j] = -1;
+		PSMCU_GRAPHS_RANGES[i][j][0] = 0;
+		PSMCU_GRAPHS_RANGES[i][j][1] = 1;
 		PSMCU_ADC_GRAPH_BUTTONS[i][j] = NewCtrl(psMcuWindowHandles[i], CTRL_SQUARE_COMMAND_BUTTON_LS, "Gr", top, left);
 		SetCtrlAttribute(psMcuWindowHandles[i], PSMCU_ADC_GRAPH_BUTTONS[i][j], ATTR_HEIGHT, ADC_BUTTON_HEIGHT);
 		SetCtrlAttribute(psMcuWindowHandles[i], PSMCU_ADC_GRAPH_BUTTONS[i][j], ATTR_WIDTH, ADC_BUTTON_WIDTH); 
@@ -521,6 +525,70 @@ void UpdateGraphs(void) {
 }
 
 
+void ShowGraphWindow(int deviceIndex, int channelIndex) {
+	int i, j;
+	
+	i = deviceIndex;
+	j = channelIndex;
+	
+	if (PSMCU_GRAPHS_WINDOW_HANDLES[i][j] < 0) {
+		PSMCU_GRAPHS_WINDOW_HANDLES[i][j] = LoadPanel(0,"PS-mcu client.uir",Graph);
+		if (PSMCU_GRAPHS_WINDOW_HANDLES[i][j] < 0) return;
+	}
+	UpdateGraphTitle(i, j); 
+	UpdateGraphPlotRange(i, j);
+
+	DisplayPanel(PSMCU_GRAPHS_WINDOW_HANDLES[i][j]);	
+}
+
+
+void UpdateGraphPlotRange(int deviceIndex, int channelIndex) {
+	int i, j;
+	
+	i = deviceIndex;
+	j = channelIndex;
+	
+	if (PSMCU_GRAPHS_WINDOW_HANDLES[i][j] >= 0) {
+		SetAxisScalingMode(
+			PSMCU_GRAPHS_WINDOW_HANDLES[i][j],
+			Graph_GRAPH,
+			VAL_LEFT_YAXIS,
+			VAL_MANUAL,
+			PSMCU_GRAPHS_RANGES[i][j][0],
+			PSMCU_GRAPHS_RANGES[i][j][1]
+		);
+						
+		SetCtrlVal(PSMCU_GRAPHS_WINDOW_HANDLES[i][j], Graph_minValue, PSMCU_GRAPHS_RANGES[i][j][0]);
+		SetCtrlVal(PSMCU_GRAPHS_WINDOW_HANDLES[i][j], Graph_maxValue, PSMCU_GRAPHS_RANGES[i][j][1]);
+	}
+}
+
+
+void CloseGraphWindow(int deviceIndex, int channelIndex) {
+	int panel;
+	
+	panel = PSMCU_GRAPHS_WINDOW_HANDLES[deviceIndex][channelIndex];
+	
+	if (panel >= 0) {
+		DiscardPanel(panel);
+    	PSMCU_GRAPHS_WINDOW_HANDLES[deviceIndex][channelIndex] = -1;
+	}
+}
+
+
+void PlaceGraphWindow(int deviceIndex, int channelIndex, int top, int left, int width, int height) {
+	int panel;
+	
+	panel = PSMCU_GRAPHS_WINDOW_HANDLES[deviceIndex][channelIndex];
+	if (panel < 0) return;
+	
+	SetPanelAttribute(panel, ATTR_TOP, top);
+	SetPanelAttribute(panel, ATTR_LEFT, left);
+	SetPanelAttribute(panel, ATTR_WIDTH, width);
+	SetPanelAttribute(panel, ATTR_HEIGHT, height);
+}
+
+
 void UpdateDeviceName(int deviceIndex, char *name) {
 	int channelIndex;
 	char windowTitle[256], shortTiltle[256];
@@ -599,11 +667,10 @@ int CVICALLBACK graphCallback (int panel, int event, void *callbackData,
 			SetCtrlAttribute(panel, Graph_minValue, ATTR_TOP, h-30);
 			break;
 		case EVENT_CLOSE:
-			DiscardPanel(panel);
 			for (i=0; i < PSMCU_NUM; i++) {
 				for (j=0; j < PSMCU_ADC_CHANNELS_NUM; j++) {
 					if (PSMCU_GRAPHS_WINDOW_HANDLES[i][j] == panel) {
-						PSMCU_GRAPHS_WINDOW_HANDLES[i][j] = -1;
+						CloseGraphWindow(i, j);
 						break;
 					}
 				}
@@ -629,13 +696,7 @@ int CVICALLBACK adcButtonCallback (int panel, int control, int event, void *call
 			
 			for (j=0; j < PSMCU_ADC_CHANNELS_NUM; j++) {
 				if (PSMCU_ADC_GRAPH_BUTTONS[i][j] == control) {
-					if (PSMCU_GRAPHS_WINDOW_HANDLES[i][j] < 0) {
-						PSMCU_GRAPHS_WINDOW_HANDLES[i][j] = LoadPanel(0,"PS-mcu client.uir",Graph);
-						if (PSMCU_GRAPHS_WINDOW_HANDLES[i][j] < 0) break;
-						UpdateGraphTitle(i, j);
-						DisplayPanel(PSMCU_GRAPHS_WINDOW_HANDLES[i][j]);
-					}
-					DisplayPanel(PSMCU_GRAPHS_WINDOW_HANDLES[i][j]);
+					ShowGraphWindow(i, j);
 					break;
 				}
 			}
@@ -650,22 +711,33 @@ int CVICALLBACK graphVerticalRange (int panel, int control, int event,
 {
 	double ymin, ymax;
 	double buf;
+	int deviceIndex, channelIndex;
+
 	switch (event)
 	{
 		case EVENT_COMMIT:
-			GetCtrlVal(panel,Graph_maxValue,&ymax);
-			GetCtrlVal(panel,Graph_minValue,&ymin);
+			GetCtrlVal(panel, Graph_maxValue, &ymax);
+			GetCtrlVal(panel, Graph_minValue, &ymin);
 			if (ymax < ymin)  {
 				buf = ymax;
 				ymax = ymin;
 				ymin = buf;
-				SetCtrlVal(panel,Graph_maxValue,ymax);
-				SetCtrlVal(panel,Graph_minValue,ymin);
+				SetCtrlVal(panel, Graph_maxValue, ymax);
+				SetCtrlVal(panel, Graph_minValue, ymin);
 			}
 			
 			if (ymax == ymin) {
 				ymax += 1;
-				SetCtrlVal(panel,Graph_maxValue,ymax);
+				SetCtrlVal(panel, Graph_maxValue, ymax);
+			}
+			
+			for (deviceIndex=0; deviceIndex < PSMCU_NUM; deviceIndex++) {
+			    for (channelIndex = 0; channelIndex < PSMCU_ADC_CHANNELS_NUM; channelIndex++) {
+				    if (panel == PSMCU_GRAPHS_WINDOW_HANDLES[deviceIndex][channelIndex]) {
+						PSMCU_GRAPHS_RANGES[deviceIndex][channelIndex][0] = ymin;  
+						PSMCU_GRAPHS_RANGES[deviceIndex][channelIndex][1] = ymax;
+					}
+				}
 			}
 			
 			SetAxisScalingMode(panel, Graph_GRAPH, VAL_LEFT_YAXIS, VAL_MANUAL, ymin, ymax);

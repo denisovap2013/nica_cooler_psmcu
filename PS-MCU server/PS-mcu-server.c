@@ -47,7 +47,7 @@ void deleteOldFiles(int timerHandle, int arg1);
 /////////////////////////////////////////   CONFIGURATION FUNCTIONS 
 int ResolveSuspiciousConig(void);
 void register_devices(void);
-void prepareTimeSchedule(void);    
+int prepareTimeSchedule(void);    
 
 void DiscardAllResources(void);
 /////////////////////////////////////////
@@ -241,7 +241,7 @@ void deleteOldFiles(int timerHandle, int arg1) {
 }
 
 
-void prepareTimeSchedule(void) {
+int prepareTimeSchedule(void) {
 	// Depending on the options checked:
 	// - CANGW periodic connection task
 	// - CANGW Device ping
@@ -249,20 +249,41 @@ void prepareTimeSchedule(void) {
 	
 	for (cgwIndex=0; cgwIndex < CFG_CANGW_BLOCKS_NUM; cgwIndex++) {
 		reconnectionRequestId[cgwIndex] = addRecordToSchedule(1, 1, CFG_CANGW_RECONNECTION_DELAY[cgwIndex], serverReconnection, "reconnection", cgwIndex);
-		
+		if (reconnectionRequestId[cgwIndex] < 0) {
+			msAddMsg(msGMS(), "[ERROR] Unable to add reconection event for the block #%d.", cgwIndex);
+			return -1;	
+		}
+
 		// Send status request
-		addRecordToSchedule(1, 0, CFG_PSMCU_DEVICE_PING_INTERVAL, psMcuStatusRequest, "device ping", cgwIndex); 
+		if (addRecordToSchedule(1, 0, CFG_PSMCU_DEVICE_PING_INTERVAL, psMcuStatusRequest, "device ping", cgwIndex) < 0) {
+			msAddMsg(msGMS(), "[ERROR] Unable to add status update event for the block #%d.", cgwIndex);
+			return -1;	
+		}
 		
 		// Request registers
-		addRecordToSchedule(1, 0, CFG_PSMCU_REGISTERS_REQUEST_INTERVAL, psMcuRegistersRequest, "registers request", cgwIndex);
+		if (addRecordToSchedule(1, 0, CFG_PSMCU_REGISTERS_REQUEST_INTERVAL, psMcuRegistersRequest, "registers request", cgwIndex) < 0) {
+			msAddMsg(msGMS(), "[ERROR] Unable to add registers update event for the block #%d.", cgwIndex);
+			return -1;	
+		}
 		
 		// Request DAC
-		addRecordToSchedule(1, 0, CFG_PSMCU_DAC_REQUEST_INTERVAL, psMcuDacRequest, "DAC request", cgwIndex);
+		if (addRecordToSchedule(1, 0, CFG_PSMCU_DAC_REQUEST_INTERVAL, psMcuDacRequest, "DAC request", cgwIndex) < 0) {
+			msAddMsg(msGMS(), "[ERROR] Unable to add DAC update event for the block #%d.", cgwIndex);
+			return -1;	
+		}
 	}
 	
 	// Logging PSMCU data
-	addRecordToSchedule(1, 0, CFG_FILE_DATA_WRITE_INTERVAL, dataFileWrite, "file write", 0);  
-	addRecordToSchedule(1, 1, 60 * 60 * 24, deleteOldFiles, "delete old files", 0);     
+	if (addRecordToSchedule(1, 0, CFG_FILE_DATA_WRITE_INTERVAL, dataFileWrite, "file write", 0) < 0) {
+		msAddMsg(msGMS(), "[ERROR] Unable to add data file write event.");
+		return -1;	
+	}
+	
+	if (addRecordToSchedule(1, 1, 60 * 60 * 24, deleteOldFiles, "delete old files", 0) < 0) {
+		msAddMsg(msGMS(), "[ERROR] Unable to add log file write event.");
+		return -1;	
+	}
+	return 0;
 }
 
 
@@ -401,8 +422,8 @@ int main(int argc, char **argv) {
 	// Setup the console window
 	sprintf(serverName, "Server: %s", CFG_SERVER_NAME);
 	
-	SetStdioWindowOptions(2000, 0, 0);
 	SetStdioPort(CVI_STDIO_WINDOW);
+	SetStdioWindowOptions(100, 0, 0);
 	SetSystemAttribute(ATTR_TASKBAR_BUTTON_TEXT, serverName);
 	SetStdioWindowVisibility(1);
 	SetSleepPolicy(VAL_SLEEP_NONE);
@@ -429,7 +450,13 @@ int main(int argc, char **argv) {
 	register_devices();
 	cgwInitializeGlobals();
 	InitCommandParsers();
-	prepareTimeSchedule();
+	if (prepareTimeSchedule() < 0) {
+		msAddMsg(msGMS(), "[ERROR] Unable to schedule all necessary events for the specified number of blocks: %d.", CFG_PSMCU_DEVICES_NUM);
+		WriteLogFiles(msGMS(), CFG_FILE_LOG_DIRECTORY); 
+		msFlushMsgs(msGMS());
+		MessagePopup("Internal error", "Unable to schedule events for interacting with devices. See the log file for more details.");
+		return 0;
+	}
 	
 	//--------------------------------------------------------
 	WriteLogFiles(msGMS(), CFG_FILE_LOG_DIRECTORY);

@@ -15,7 +15,7 @@
 
 // PSMCU parameters
 #define CFG_MAX_PSMCU_DEVICES_NUM 40
-#define CFG_CGW_MAX_NUM 4
+#define CFG_CGW_MAX_NUM 40
 
 // Server general parameters
 extern char     CFG_SERVER_NAME[256];

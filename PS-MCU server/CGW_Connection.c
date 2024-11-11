@@ -64,7 +64,7 @@ int cgwCheckVersion(char *errbuf) {
 int cgwConnection_Init(int cgwIndex)
 {
 	#define CONNECTION_DELAY_MAX 120
-	#define DEFAULT_CGW_CONNECTION_TIMEOUT 5
+	#define DEFAULT_CGW_CONNECTION_TIMEOUT 1
 	char errbuf[256];
 	char address[256];
 	CANGW_CONN_T conn_id;

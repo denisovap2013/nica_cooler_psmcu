@@ -5,7 +5,7 @@
 #ifndef __TimeMarkers_H__
 #define __TimeMarkers_H__
 
-#define MAX_RECORDS_NUMBER 20
+#define MAX_RECORDS_NUMBER 25
 
 typedef struct timeScheduleRecord_t {
 	int active;

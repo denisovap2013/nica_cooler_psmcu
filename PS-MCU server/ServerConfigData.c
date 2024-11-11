@@ -125,6 +125,12 @@ void InitServerConfig(char * configPath) {
 	char *tagName;
 	
 	// Variables for defaults values
+	int		CFG_CANGW_DEFAULT_BAUD;
+	int		CFG_CANGW_DEFAULT_IGNORE_UNKNOWN;   
+	int		CFG_CANGW_DEFAULT_RECONNECTION_DELAY;
+	int		CFG_CANGW_DEFALT_RECV_TIMEOUT;
+	int		CFG_CANGW_DEFAULT_SEND_TIMEOUT;
+
 	char 	CFG_PSMCU_ADC_DEFAULT_NAMES[PSMCU_ADC_CHANNELS_NUM][256];
 	double 	CFG_PSMCU_ADC_DEFAULT_COEFF[PSMCU_ADC_CHANNELS_NUM][2]; 
 	char 	CFG_PSMCU_DAC_DEFAULT_NAMES[PSMCU_DAC_CHANNELS_NUM][256];
@@ -142,6 +148,7 @@ void InitServerConfig(char * configPath) {
 	#define READ_DOUBLE_OR_DEFAULT(s, k, var, default_val) if (Ini_ItemExists(iniText, (s), (k))) { READ_DOUBLE((s), (k), (var)) } else { (var) = (default_val); }
 	#define READ_COEFFICIENTS(s, k, sbuf, c1, c2) if(Ini_GetStringIntoBuffer(iniText, (s), (k), (sbuf), sizeof((sbuf))) <= 0) {STOP_CONFIGURATION((s), (k));} else { if (sscanf((sbuf), "%lf %lf", &(c1), &(c2)) < 2 ) {STOP_CONFIGURATION((s), (k));} }
 	#define READ_COEFFICIENTS_OR_DEFAULT(s, k, sbuf, c1, c2, dc1, dc2) if (Ini_ItemExists(iniText, (s), (k))) { READ_COEFFICIENTS((s), (k), (sbuf), (c1), (c2)) } else { (c1) = (dc1); (c2) = (dc2); }  
+	#define READ_INT_OR_DEFAULT(s, k, var, default_val) if (Ini_ItemExists(iniText, (s), (k))) { READ_INT((s), (k), (var)) } else { (var) = (default_val); }
 	#define READ_STRING_OR_DEFAULT(s, k, var, default_val) if (Ini_ItemExists(iniText, (s), (k))) { READ_STRING((s), (k), (var)) } else { strcpy((var), (default_val)); }
 
 	iniText = Ini_New(0);
@@ -175,16 +182,23 @@ void InitServerConfig(char * configPath) {
 		INFORM_AND_STOP(msg);
 	}
 	
+	// Read default parameter for CanGw connections
+	READ_INT(CANGW_SECTION, "cangwBaud", CFG_CANGW_DEFAULT_BAUD);
+	READ_INT(CANGW_SECTION, "cangwIgnoreUnknown", CFG_CANGW_DEFAULT_IGNORE_UNKNOWN); 
+	READ_INT(CANGW_SECTION, "connectionDelay", CFG_CANGW_DEFAULT_RECONNECTION_DELAY);
+	READ_INT(CANGW_SECTION, "recvTimeout", CFG_CANGW_DEFALT_RECV_TIMEOUT);
+	READ_INT(CANGW_SECTION, "sendTimeout", CFG_CANGW_DEFAULT_SEND_TIMEOUT);
+	
 	for (cgwIndex=0; cgwIndex < CFG_CANGW_BLOCKS_NUM; cgwIndex++) {
 		sprintf(sectionName, "CANGW-BLOCK-%d", cgwIndex);
 		READ_STRING(sectionName, "cangwName", CFG_CANGW_BLOCK_NAME[cgwIndex]);   
 		READ_STRING(sectionName, "cangwIp", CFG_CANGW_IP[cgwIndex]);   
 		READ_INT(sectionName, "cangwPort", CFG_CANGW_PORT[cgwIndex]);
-		READ_INT(sectionName, "cangwBaud", CFG_CANGW_BAUD[cgwIndex]);
-		READ_INT(sectionName, "cangwIgnoreUnknown", CFG_CANGW_IGNORE_UNKNOWN[cgwIndex]); 
-		READ_INT(sectionName, "connectionDelay", CFG_CANGW_RECONNECTION_DELAY[cgwIndex]);
-		READ_INT(sectionName, "recvTimeout", CFG_CANGW_RECV_TIMEOUT[cgwIndex]);
-		READ_INT(sectionName, "sendTimeout", CFG_CANGW_SEND_TIMEOUT[cgwIndex]);
+		READ_INT_OR_DEFAULT(sectionName, "cangwBaud", CFG_CANGW_BAUD[cgwIndex], CFG_CANGW_DEFAULT_BAUD);
+		READ_INT_OR_DEFAULT(sectionName, "cangwIgnoreUnknown", CFG_CANGW_IGNORE_UNKNOWN[cgwIndex], CFG_CANGW_DEFAULT_IGNORE_UNKNOWN); 
+		READ_INT_OR_DEFAULT(sectionName, "connectionDelay", CFG_CANGW_RECONNECTION_DELAY[cgwIndex], CFG_CANGW_DEFAULT_RECONNECTION_DELAY);
+		READ_INT_OR_DEFAULT(sectionName, "recvTimeout", CFG_CANGW_RECV_TIMEOUT[cgwIndex], CFG_CANGW_DEFALT_RECV_TIMEOUT);
+		READ_INT_OR_DEFAULT(sectionName, "sendTimeout", CFG_CANGW_SEND_TIMEOUT[cgwIndex], CFG_CANGW_DEFAULT_SEND_TIMEOUT);
 	}
 
 	////////////////////////////////////////////////////

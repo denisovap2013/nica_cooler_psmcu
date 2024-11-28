@@ -14,6 +14,9 @@
 #include "TimeMarkers.h" 
 
 unsigned int cgwConnectionBroken[CFG_CGW_MAX_NUM];
+unsigned int cgwDeviceConnectionAttempts[CFG_CGW_MAX_NUM];
+unsigned int cgwTotalConnectionAttempts;
+
 CANGW_CONN_T cgwConnectionIDs[CFG_CGW_MAX_NUM]; 
 int cgwGlobalsInitialized = 0;
 
@@ -23,9 +26,11 @@ void cgwInitializeGlobals(void) {
 	
 	for (cgwIndex=0; cgwIndex < CFG_CGW_MAX_NUM; cgwIndex++) {
 		cgwConnectionBroken[cgwIndex] = 1;
+		cgwDeviceConnectionAttempts[cgwIndex] = 0;
 		cgwConnectionIDs[cgwIndex] = CANGW_ERR;
 	}
 	
+	cgwTotalConnectionAttempts = 0;
 	cgwGlobalsInitialized = 1;
 }
 
@@ -184,4 +189,26 @@ int cgwConnection_Recv(int cgwIndex, cangw_msg_t * msg, short msgs_max_num, unsi
 	
 	return cmsg;
 }
+
+// Auxiliary functions
+void cgwConnection_ResetDeviceCounter(int cgwIndex) {
+	cgwDeviceConnectionAttempts[cgwIndex] = 0;	
+}
+
+int cgwConnection_IsDeviceAttemptsDepleted(int cgwIndex) {
+	if (cgwDeviceConnectionAttempts[cgwIndex] >= MAX_CONSECUTIVE_CONNECTION_ATTEMPTS) return 1;
+	return 0;
+}
+
+int cgwConnection_IsTotalAttemptsDepleted(void) {
+	if (cgwTotalConnectionAttempts >= MAX_TOTAL_CONNECTION_ATTEMPTS) return 1;
+	return 0;
+}
+
+int cgwConnection_IsReconnectionAvailable(int cgwIndex) {
+	if (cgwTotalConnectionAttempts >= MAX_TOTAL_CONNECTION_ATTEMPTS) return 0;
+	if (cgwDeviceConnectionAttempts[cgwIndex] >= MAX_CONSECUTIVE_CONNECTION_ATTEMPTS) return 0;
+	return 1;
+}
+
 

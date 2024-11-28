@@ -58,6 +58,7 @@ void psMcuAwakeCallback(void *parameters);
 /////////////////////////////////////////   
 
 void bgdFunc(void);
+void processUserInput(void);
 
 
 void avoidZeroCharacters(char *str,int bytes);
@@ -108,6 +109,9 @@ int CVICALLBACK userMainCallback(int MenuBarHandle, int MenuItemID, int event, v
 					break;
 			}
 			break;
+		case EVENT_LEFT_CLICK:
+			printf("Wow\n");
+			break;
 	}
 	
 	return 0;
@@ -126,6 +130,8 @@ void bgdFunc(void)
 	int cmsg, i; 
 	
 	for (cgwIndex=0; cgwIndex < CFG_CANGW_BLOCKS_NUM; cgwIndex++) {
+		if (cgwConnectionBroken[cgwIndex]) continue;
+
 		cmsg = cgwConnection_Recv(cgwIndex, msgs_from_server, MAX_MSG_NUM, CFG_CANGW_RECV_TIMEOUT[cgwIndex], "background looped process");
 
 		if (cmsg > 0) {
@@ -151,35 +157,80 @@ void bgdFunc(void)
 	}
 	
 	////////////////
-		
+	processUserInput();
+	
 	processScheduleEvents();
 	
 	for (cgwIndex=0; cgwIndex < CFG_CANGW_BLOCKS_NUM; cgwIndex++) {
 		if (!cgwConnectionBroken[cgwIndex]) updateDevicesDownTime(&deviceKit[cgwIndex]);
 		updateDevices(&deviceKit[cgwIndex]);
 	}
-	WriteLogFiles(msGMS(), CFG_FILE_LOG_DIRECTORY);
-	msPrintMsgs(msGMS(), stdout);
-	msFlushMsgs(msGMS());
+	if (msMsgsAvailable(msGMS())) {
+		
+		WriteLogFiles(msGMS(), CFG_FILE_LOG_DIRECTORY);
+		msPrintMsgs(msGMS(), stdout);
+		msFlushMsgs(msGMS());
+	}
+}
+
+
+void processUserInput(void) {
+	int cgwIndex;
+	if (KeyHit()) {
+		if (GetKey() == VAL_MENUKEY_MODIFIER | '*') {
+			for (cgwIndex=0; cgwIndex < CFG_CANGW_BLOCKS_NUM; cgwIndex++) cgwConnection_ResetDeviceCounter(cgwIndex);
+			msAddMsg(msGMS(), "%s [DEBUG] Reset the number of reconnection attempts.", TimeStamp(0));
+		}
+	}
 }
 
 
 void serverReconnection(int timerHandle, int cgwIndex) {
 
-	if (cgwConnectionBroken[cgwIndex]) {
-		if (cgwConnection_Init(cgwIndex) < CANGW_NOERR) {
+	if (cgwConnectionBroken[cgwIndex] && cgwConnection_IsReconnectionAvailable(cgwIndex)) {
+		cgwDeviceConnectionAttempts[cgwIndex]++;
+		cgwTotalConnectionAttempts++;
+		
+		if (cgwConnection_IsTotalAttemptsDepleted()) {
 			msAddMsg(
 				msGMS(),
-				"%s [CANGW] [%s] Next connection request will be in %d seconds.",
-				TimeStamp(0),
-				CFG_CANGW_BLOCK_NAME[cgwIndex],
-				CFG_CANGW_RECONNECTION_DELAY[cgwIndex]
-			); 
+				"%s [CANGW] Total number of reconnection attempts depleted. Please, restart the server, if reconnection is necessary.",
+				TimeStamp(0)
+			);	
+		}
+
+		if (cgwConnection_Init(cgwIndex) < CANGW_NOERR) {
+			if (cgwConnection_IsDeviceAttemptsDepleted(cgwIndex)) {
+				if (!cgwConnection_IsTotalAttemptsDepleted()) {
+					msAddMsg(
+						msGMS(),
+						"%s [CANGW] [%s] Number of reconnection attempts depleted. You can hold 'Ctr+*', restart"
+						" the server or send the command to reset the reconnection attempts counter",
+						TimeStamp(0),
+						CFG_CANGW_BLOCK_NAME[cgwIndex]
+					);	
+				}
+			} else {
+				msAddMsg(
+					msGMS(),
+					"%s [CANGW] [%s] Next connection request will be in %d seconds.",
+					TimeStamp(0),
+					CFG_CANGW_BLOCK_NAME[cgwIndex],
+					CFG_CANGW_RECONNECTION_DELAY[cgwIndex]
+				);
+			}
+			 
 			
 		} else {
 			// Successfully connected
 			resetAllAdcMeasurements(cgwIndex);	
-			deactivateScheduleRecord(reconnectionRequestId[cgwIndex]); 
+			deactivateScheduleRecord(reconnectionRequestId[cgwIndex]);
+			
+			// Reset device connection attempts counter.
+			// (total number of connection attempts is kept, in order to inform
+			// the user when it is time to restart the server application.)
+			cgwDeviceConnectionAttempts[cgwIndex] = 0;  
+			
 		}
 	}
 }

@@ -131,6 +131,10 @@
 
 #define CMD_PRIME_ALL_ERR_CLEAR "PSMCU:ALL:ERROR:CLEAR"
 #define CMD_ALIAS_ALL_ERR_CLEAR "IST:ALL:ERROR:CLEAR"
+		
+// Debug
+#define CMD_PRIME_DBG_RST_CGW_CONN "PSMCU:DBG:RSTCGWCONN"
+#define CMD_ALIAS_DBG_RST_CGW_CONN "IST:DBG:RSTCGWCONN"
 //==============================================================================
 // Types
 typedef int (*parserFunciton)(char *commandBody, char *answerBuffer, char *ip);
@@ -191,6 +195,9 @@ int cmdParserSingleErrorGet(char *, char *, char *);
 int cmdParserSingleErrorClear(char *, char *, char *);
 int cmdParserAllErrorSet(char *, char *, char *);
 int cmdParserAllErrorClear(char *, char *, char *);
+
+// Debug commends
+int cmdParseDbgCgwReconnectionReset(char *, char *, char *); 
 
 #ifdef __cplusplus
     }

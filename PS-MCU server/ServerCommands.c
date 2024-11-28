@@ -105,6 +105,9 @@ void InitCommandParsers(void) {
 	registerCommandParser(CMD_PRIME_ALL_ERR_SET, CMD_ALIAS_ALL_ERR_SET, cmdParserAllErrorSet);
 	registerCommandParser(CMD_PRIME_ALL_ERR_CLEAR, CMD_ALIAS_ALL_ERR_CLEAR, cmdParserAllErrorClear);
 	
+	// Debug commands
+	registerCommandParser(CMD_PRIME_DBG_RST_CGW_CONN, CMD_ALIAS_DBG_RST_CGW_CONN, cmdParseDbgCgwReconnectionReset);
+	
 	// Prepare the devices names dicitonary
 	for (globalDeviceIndex=0; globalDeviceIndex < CFG_PSMCU_DEVICES_NUM; globalDeviceIndex++) {
 		strcpy(devName, CFG_PSMCU_DEVICES_NAMES[globalDeviceIndex]);
@@ -699,5 +702,21 @@ int cmdParserAllErrorClear(char *commandBody, char *answerBuffer, char *ip) {
 	
 	logNotification(ip, "Clearing all errors status.");
 	
+	return 1;
+}
+
+// Debug commands
+int cmdParseDbgCgwReconnectionReset(char *commandBody, char *answerBuffer, char *ip) {
+	int cgwIndex;
+	
+	if (!cgwConnection_IsTotalAttemptsDepleted()) {
+		logNotification(ip, "Reset the CanGw reconnection counter for all devices"); 	
+	} else {
+		logNotification(ip, "Attempted to reset the CanGw reconnection counter but the total number of attemtps is depleted."); 	
+	}
+	
+	for (cgwIndex=0; cgwIndex < CFG_CANGW_BLOCKS_NUM; cgwIndex++) {
+		cgwConnection_ResetDeviceCounter(cgwIndex);
+	}
 	return 1;
 }

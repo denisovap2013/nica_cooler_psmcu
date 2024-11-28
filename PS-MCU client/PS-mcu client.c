@@ -1642,6 +1642,14 @@ void CVICALLBACK debugSetErrorsAll (int menuBar, int menuItem, void *callbackDat
 	SendBroadcastCommand("PSMCU:ALL:ERROR:SET Error set for all devices!");	
 }
 
+void CVICALLBACK resetCgwReconn (int menuBar, int menuItem, void *callbackData,
+		int panel)
+{
+	logMessage("Sent request for resetting the CanGw reconnection counter");
+	SendBroadcastCommand("PSMCU:DBG:RSTCGWCONN");
+	
+}
+
 void CVICALLBACK debugSetErrorsSingle (int menuBar, int menuItem, void *callbackData,
 		int panel)
 {

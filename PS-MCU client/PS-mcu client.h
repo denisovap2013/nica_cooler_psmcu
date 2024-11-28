@@ -39,12 +39,13 @@
 #define  BAR_PROGRAM_MENU_CONSOLE_VIEW    6       /* callback function: ShowHideConsole */
 #define  BAR_COMMANDS                     7
 #define  BAR_COMMANDS_CLEAR_ERRS          8       /* callback function: menuCommandsClearAllErrors */
-#define  BAR_COMMANDS_ITEM1               9       /* callback function: debugSetErrorsAll */
-#define  BAR_COMMANDS_ITEM2               10      /* callback function: debugSetErrorsSingle */
-#define  BAR_COMMANDS_SEPARATOR           11
-#define  BAR_COMMANDS_EXTRA               12
-#define  BAR_COMMANDS_EXTRA_SUBMENU       13
-#define  BAR_COMMANDS_EXTRA_RELOAD_NAMES  14      /* callback function: menuExtraReloadNames */
+#define  BAR_COMMANDS_RESET_CGW_RECONN    9       /* callback function: resetCgwReconn */
+#define  BAR_COMMANDS_SEPARATOR           10
+#define  BAR_COMMANDS_EXTRA               11
+#define  BAR_COMMANDS_EXTRA_SUBMENU       12
+#define  BAR_COMMANDS_EXTRA_RELOAD_NAMES  13      /* callback function: menuExtraReloadNames */
+#define  BAR_COMMANDS_EXTRA_ITEM1         14      /* callback function: debugSetErrorsAll */
+#define  BAR_COMMANDS_EXTRA_ITEM2         15      /* callback function: debugSetErrorsSingle */
 
 
      /* Callback Prototypes: */
@@ -60,6 +61,7 @@ void CVICALLBACK menuExtraReloadNames(int menubar, int menuItem, void *callbackD
 void CVICALLBACK menuProgramLoadView(int menubar, int menuItem, void *callbackData, int panel);
 void CVICALLBACK menuProgramSaveView(int menubar, int menuItem, void *callbackData, int panel);
 int  CVICALLBACK panelCB(int panel, int event, void *callbackData, int eventData1, int eventData2);
+void CVICALLBACK resetCgwReconn(int menubar, int menuItem, void *callbackData, int panel);
 void CVICALLBACK ShowHideConsole(int menubar, int menuItem, void *callbackData, int panel);
 int  CVICALLBACK tick(int panel, int control, int event, void *callbackData, int eventData1, int eventData2);
 

@@ -9,6 +9,7 @@
 //#include "MessageStack.h"
 
 #include "MessageStack.h"
+#include "TimeMarkers.h"
 #include <stdarg.h>
 
 message_stack_t MS_GlobalMessageStack = 0;
@@ -131,4 +132,16 @@ int msMsgsAvailable(message_stack_t msg_stack)
 		buf = buf->next;
 	}
 	return count;
+}
+
+// Wrapper over the global message stack with additionsl timestamp prefix
+void logMessage(char *msg, ...) {
+	char buf[256];
+	va_list arglist;
+
+	va_start(arglist, msg);
+	vsprintf(buf, msg, arglist);
+	va_end(arglist);
+
+	msAddMsg(msGMS(), "%s %s", TimeStamp(0), buf);
 }

@@ -42,6 +42,7 @@
 // Static functions
 int processUserCommand(char *userCmd, char *answerBuffer, char *ip);
 void toupperCase(char *text);
+void logNotification(char *ip, char *message, ...);
 
 //==============================================================================
 // Global variables
@@ -245,6 +246,7 @@ int processUserCommand(char *userCmd, char *answerBuffer, char *ip) {
 		
 		// Check for errors
 		if (result < 0) {
+			logNotification(ip, "[ERROR] Incorrect command data: \"%s\"", userCmd);
 			sprintf(answerBuffer, "!%s\n", userCmd); 
 			return -1; // Error occurred
 		}
@@ -255,7 +257,7 @@ int processUserCommand(char *userCmd, char *answerBuffer, char *ip) {
 			sprintf(answerBuffer, "%s %s\n", cmdName, parserAnswer);
 
 	} else {
-		msAddMsg(msGMS(), "%s [CLIENT] Unknown command: \"%s\"", TimeStamp(0), userCmd);
+		logNotification(ip, "[ERROR] Unknown command: \"%s\"", userCmd);
 		sprintf(answerBuffer, "?%s\n", userCmd);	
 	}
 	
@@ -376,6 +378,8 @@ int cmdParserSingleAdcReset(char *commandBody, char *answerBuffer, char *ip) {
 	if (deviceIndexToDeviceId(deviceIndex, &cgwIndex, &deviceId) < 0) return -1; 
 	if (resetSingleAdcMeasurements(cgwIndex, deviceId) < 0) return -1; 
 	
+	logNotification(ip, "Block %d, deviceID 0x%X - Single ADC RESET", cgwIndex, deviceId); 
+	
 	return 1;
 }
 
@@ -402,6 +406,8 @@ int cmdParserSingleOutRegistersSet(char *commandBody, char *answerBuffer, char *
 	if (deviceIndexToDeviceId(deviceIndex, &cgwIndex, &deviceId) < 0) return -1;
 	if (setOutputRegisters(cgwIndex, deviceId, registers, mask) < 0) return -1;
 
+	logNotification(ip, "Block %d, deviceID 0x%X - Single Registers SET to 0x%X (mask 0x%X)", cgwIndex, deviceId); 
+	
 	return 1;
 }
 
@@ -413,6 +419,8 @@ int cmdParserSingleInterlockRestore(char *commandBody, char *answerBuffer, char 
 	if (deviceIndexToDeviceId(deviceIndex, &cgwIndex, &deviceId) < 0) return -1; 
 	if (controlSingleInterlockRestore(cgwIndex, deviceId) < 0) return -1;
 
+	logNotification(ip, "Block %d, deviceID 0x%X - Single Force RESTORE", cgwIndex, deviceId);
+	
 	return 1;
 }
 
@@ -424,6 +432,8 @@ int cmdParserSingleInterlockDrop(char *commandBody, char *answerBuffer, char *ip
 	if (deviceIndexToDeviceId(deviceIndex, &cgwIndex, &deviceId) < 0) return -1;
 	if (controlSingleInterlockDrop(cgwIndex, deviceId) < 0) return -1; 
 
+	logNotification(ip, "Block %d, deviceID 0x%X - Single Force DROP", cgwIndex, deviceId); 
+	
 	return 1;
 }
 
@@ -435,6 +445,8 @@ int cmdParserSingleForceOn(char *commandBody, char *answerBuffer, char *ip) {
 	if (deviceIndexToDeviceId(deviceIndex, &cgwIndex, &deviceId) < 0) return -1;
 	if (controlSingleForceOn(cgwIndex, deviceId) < 0) return -1; 
 
+	logNotification(ip, "Block %d, deviceID 0x%X - Single Force ON", cgwIndex, deviceId); 
+	
 	return 1;
 }
 
@@ -445,6 +457,8 @@ int cmdParserSingleForceOff(char *commandBody, char *answerBuffer, char *ip) {
 	if (sscanf(commandBody, "%d", &deviceIndex) != 1) return -1;
 	if (deviceIndexToDeviceId(deviceIndex, &cgwIndex, &deviceId) < 0) return -1;
 	if (controlSingleForceOff(cgwIndex, deviceId) < 0) return -1;
+	
+	logNotification(ip, "Block %d, deviceID 0x%X - Single Force OFF", cgwIndex, deviceId);
 	
 	return 1;
 }
@@ -457,6 +471,8 @@ int cmdParserSinglePermissionOn(char *commandBody, char *answerBuffer, char *ip)
 	if (deviceIndexToDeviceId(deviceIndex, &cgwIndex, &deviceId) < 0) return -1;
 	if (controlSinglePermissionOn(cgwIndex, deviceId) < 0) return -1;
 	
+	logNotification(ip, "Block %d, deviceID 0x%X - Single Current Permission ON", cgwIndex, deviceId); 
+	
 	return 1;
 }
 
@@ -467,6 +483,8 @@ int cmdParserSinglePermissionOff(char *commandBody, char *answerBuffer, char *ip
 	if (sscanf(commandBody, "%d", &deviceIndex) != 1) return -1;
 	if (deviceIndexToDeviceId(deviceIndex, &cgwIndex, &deviceId) < 0) return -1;
 	if (controlSinglePermissionOff(cgwIndex, deviceId) < 0) return -1; 
+	
+	logNotification(ip, "Block %d, deviceID 0x%X - Single Current Permission OFF", cgwIndex, deviceId);
 	
 	return 1;
 }
@@ -552,6 +570,9 @@ int cmdParserAllAdcReset(char *commandBody, char *answerBuffer, char *ip) {
 	for (cgwIndex=0; cgwIndex < CFG_CANGW_BLOCKS_NUM; cgwIndex++) {
 		if (resetAllAdcMeasurements(cgwIndex) < 0) return -1;  
 	}
+	
+	logNotification(ip, "All ADC RESET");  
+	
 	return 1;
 }
 
@@ -561,6 +582,9 @@ int cmdParserAllForceOff(char *commandBody, char *answerBuffer, char *ip) {
 	for (cgwIndex=0; cgwIndex < CFG_CANGW_BLOCKS_NUM; cgwIndex++) {
 		if (controlAllForceOff(cgwIndex) < 0) return -1;  
 	}
+	
+	logNotification(ip, "All Force OFF");  
+	
 	return 1;
 }
 
@@ -570,6 +594,9 @@ int cmdParserAllPermissionOff(char *commandBody, char *answerBuffer, char *ip) {
 	for (cgwIndex=0; cgwIndex < CFG_CANGW_BLOCKS_NUM; cgwIndex++) {
 		if (controlAllPermissionOff(cgwIndex) < 0) return -1;  
 	}
+
+	logNotification(ip, "All Current Permission OFF");
+	
 	return 1;
 }
 

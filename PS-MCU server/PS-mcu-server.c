@@ -45,7 +45,7 @@ void deleteOldFiles(int timerHandle, int arg1);
 /////////////////////////////////////////
 
 /////////////////////////////////////////   CONFIGURATION FUNCTIONS 
-int ResolveSuspiciousConig(void);
+int ResolveSuspiciousConfig(void);
 void register_devices(void);
 int prepareTimeSchedule(void);    
 
@@ -417,7 +417,7 @@ void register_devices(void) {
 }
 
 
-int ResolveSuspiciousConig(void) {
+int ResolveSuspiciousConfig(void) {
     char msg[512];
 	int devIndex;
 	double max_val, min_val, val;
@@ -463,8 +463,11 @@ int main(int argc, char **argv) {
 	}
 	
 	InitServerConfig(configFilePath);
+	
 	// Check suspicious config. parameters and ask the user if he wants to continue
-	if (!ResolveSuspiciousConig()) return 0;
+	if (!ResolveSuspiciousConfig()) return 0;
+	
+	copyConfigurationFile(CFG_FILE_LOG_DIRECTORY, configFilePath);
 	
 	/////////////////////////////////
 	// Body of the program

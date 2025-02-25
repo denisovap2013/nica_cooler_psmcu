@@ -189,7 +189,7 @@ void dataExchFunc(unsigned handle, char *ip)
 	byteRecv = ServerTCPRead(handle, buf, MAX_RECEIVED_BYTES, 0);
 	if ( byteRecv <= 0 )
 	{
-		msAddMsg(msGMS(),"%s [SERVER CLIENT] Error occured while receiving messages from the client >> %s", TimeStamp(0), GetTCPSystemErrorString());
+		logMessage("[SERVER CLIENT] Error occured while receiving messages from the client >> %s", GetTCPSystemErrorString());
 		return;
 	}
 	

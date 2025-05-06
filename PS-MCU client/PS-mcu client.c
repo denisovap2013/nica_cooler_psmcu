@@ -153,6 +153,7 @@ int main (int argc, char *argv[])
 	sprintf(SERVER_INDICATOR_OFFLINE_LABEL, "Server is Offline (%s:%d)", CFG_SERVER_IP, CFG_SERVER_PORT);
 	
 	msInitGlobalStack();
+	msAddMsg(msGMS(), "Configuration file: %s", configFilePath);
 	msAddMsg(msGMS(), "------\n[NEW SESSION]\n------");
 	connectionWait = CFG_SERVER_CONNECTION_INTERVAL / TIMER_TICK_TIME; 
 	

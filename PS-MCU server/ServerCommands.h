@@ -151,9 +151,7 @@ parserFunciton getCommandparser(char *command);
 
 void dataExchFunc(unsigned handle, char *ip);
 
-// Commands parsers (cmdBody, answerBuffer)
-
-int cmdUnknownCommandParser(char *, char *, char *);
+// Commands parsers (cmdBody, answerBuffer, ip)
 
 int cmdParserSingleGetFullInfo(char *, char *, char *);
 int cmdParserSingleDacSet(char *, char *, char *);

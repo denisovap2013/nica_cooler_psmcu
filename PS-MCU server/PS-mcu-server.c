@@ -109,9 +109,6 @@ int CVICALLBACK userMainCallback(int MenuBarHandle, int MenuItemID, int event, v
 					break;
 			}
 			break;
-		case EVENT_LEFT_CLICK:
-			printf("Wow\n");
-			break;
 	}
 	
 	return 0;

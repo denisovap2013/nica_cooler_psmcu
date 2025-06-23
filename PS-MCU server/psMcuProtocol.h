@@ -27,7 +27,7 @@ typedef enum psMcuProtocol_time
 {
 	PSMCU_TIME_1MS = 0,
 	PSMCU_TIME_2MS = 1,
-	PSMCU_TIME_5MS = 3,
+	PSMCU_TIME_5MS = 2,
 	PSMCU_TIME_10MS = 3,
 	PSMCU_TIME_20MS = 4,
 	PSMCU_TIME_40MS = 5,

@@ -316,10 +316,10 @@ void cgwDevices_MessageHook(cgw_devices_t * devKit, cangw_msg_t msg)
 			}
 			else
 			{
-				msAddMsg(msGMS(),"%s Device [%d (0x%X)] \"Unknown device\"- Incoming message:", TimeStamp(0), deviceID, deviceID);			
-				msAddMsg(msGMS(),"%X %X %X %X %X %X %X %X", deviceID, deviceID,
-									msg.data[0],msg.data[1],msg.data[2],msg.data[3],
-									msg.data[4],msg.data[5],msg.data[6],msg.data[7]);	
+				msAddMsg(msGMS(), "%s Device [%d (0x%X)] \"Unknown device\"- Incoming message:", TimeStamp(0), deviceID, deviceID);			
+				msAddMsg(msGMS(), "%X %X %X %X %X %X %X %X",
+								  msg.data[0],msg.data[1],msg.data[2],msg.data[3],
+								  msg.data[4],msg.data[5],msg.data[6],msg.data[7]);	
 			}
 		}
 		

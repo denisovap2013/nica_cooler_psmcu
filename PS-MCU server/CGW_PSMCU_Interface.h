@@ -67,6 +67,12 @@ typedef struct cgwPsMcu_Information
 	unsigned int maxDACcodeStep;
 	clock_t DACslowUpdateDelta;
 	
+	// Additional options
+	
+	// Delay in seconds after the contactor was turned on, before any other
+	// power supplies will be allowed to turn on their contactors.
+	double contactorDelay;
+	
 	// Tables
 	// ...
 	
@@ -94,7 +100,8 @@ int cgwPsMcu_RegisterDevice(
 	char inputRegistersNames[PSMCU_INPUT_REGISTERS_NUM][256],
 	char outputRegistersNames[PSMCU_OUTPUT_REGISTERS_NUM][256],
 	unsigned int slowDacTimeDelta_ms,
-	float slowDacMaxVoltageStep
+	float slowDacMaxVoltageStep,
+	double contactorDelay
 	);
 
 // Device update

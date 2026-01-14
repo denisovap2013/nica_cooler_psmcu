@@ -81,6 +81,7 @@ void DiscardAllResources(void) {
 	}
 		
 	ReleaseCommandParsers();
+	cfgReleaseDeviceTypeSettings();
 	msReleaseGlobalStack();
 }
 
@@ -374,7 +375,8 @@ void psMcuAwakeCallback(void *parameters) {
 
 
 void register_devices(void) {
-	int cgwIndex, globalDeviceIndex;  
+	int cgwIndex, globalDeviceIndex; 
+	deviceTypeSettings *settings;
 
 	cgwDevices_InitPrototypes();
 	
@@ -387,6 +389,8 @@ void register_devices(void) {
 	for (globalDeviceIndex=0; globalDeviceIndex < CFG_PSMCU_DEVICES_NUM; globalDeviceIndex++) {
 		cgwIndex = CFG_PSMCU_BLOCKS_IDS[globalDeviceIndex];
 
+		settings = cfgDeviceTypeSettingsGet(CFG_PSMCU_DEVICES_TYPES[globalDeviceIndex]);
+		
 		cgwPsMcu_RegisterDevice(
 			&deviceKit[cgwIndex],
 			globalDeviceIndex,
@@ -404,7 +408,8 @@ void register_devices(void) {
 			CFG_PSMCU_INREG_NAMES[globalDeviceIndex],
 			CFG_PSMCU_OUTREG_NAMES[globalDeviceIndex],
 			CFG_PSMCU_DAC_SLOW_TIME_DELTA,
-			CFG_PSMCU_DAC_SLOW_VOLTAGE_STEP
+			CFG_PSMCU_DAC_SLOW_VOLTAGE_STEP,
+			settings->contactor_delay
 		);	
 	}
 	

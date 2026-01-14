@@ -37,7 +37,8 @@ int cgwPsMcu_RegisterDevice(cgw_devices_t * devKit,
 							char inputRegistersNames[PSMCU_INPUT_REGISTERS_NUM][256],
 							char outputRegistersNames[PSMCU_OUTPUT_REGISTERS_NUM][256],
 							unsigned int slowDacTimeDelta_ms,
-							float slowDacMaxVoltageStep)
+							float slowDacMaxVoltageStep,
+							double contactorDelay)
 {
 	cgwPsMcu_Information_t * deviceInfo;
 	int i;

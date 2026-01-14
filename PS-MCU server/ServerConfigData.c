@@ -11,6 +11,7 @@ int     CFG_PSMCU_DEVICES_NUM;
 int     CFG_PSMCU_BLOCKS_IDS[CFG_MAX_PSMCU_DEVICES_NUM];  
 int     CFG_PSMCU_DEVICES_IDS[CFG_MAX_PSMCU_DEVICES_NUM];
 char    CFG_PSMCU_DEVICES_NAMES[CFG_MAX_PSMCU_DEVICES_NUM][256];
+char    CFG_PSMCU_DEVICES_TYPES[CFG_MAX_PSMCU_DEVICES_NUM][CFG_MAX_TYPE_LEN]; 
 
 // Defaults (static global variables) (maybe move to the function scope?)
 
@@ -101,27 +102,105 @@ void _getDeviceIndexErrMsg(int index, int itemsNumber, char *tagName, char *msg)
 }
 
 
-int readDeviceAddrAndName(int devIndex, char *specsString, char *msg) {
+void removeNameTrailingSpaces(char *name) {
+    char *end = name + strlen(name);
+	
+	while((end > name) && ((*(end-1) == ' ') || (*(end-1) == '\t'))) {
+		end--;
+		*end = 0;
+	}
+}
+
+int readDeviceInfo(int devIndex, char *specsString, char *msg) {
 	int strPos;
+	char * name_start;
+	char * type_separator;
+	char * type_start;
+	char type_name[256];
 
 	if (sscanf(specsString, "%d %x %n", &CFG_PSMCU_BLOCKS_IDS[devIndex], &CFG_PSMCU_DEVICES_IDS[devIndex], &strPos) != 2 ) {
-		sprintf(msg, "[%s] Cannot parse the address and name specifications for device with index %d", PSMCU_LIST_SECTION, devIndex, devIndex); 
+		sprintf(
+			msg,
+			"[%s] Cannot parse the address and name specifications for device with index %d.\nDevice specification: \"%s\"",
+			PSMCU_LIST_SECTION, devIndex, devIndex, specsString
+		); 
 		return -1; 
 	}
 	
 	if (CFG_PSMCU_BLOCKS_IDS[devIndex] < 0 || CFG_PSMCU_BLOCKS_IDS[devIndex] >= CFG_CANGW_BLOCKS_NUM) {
-		sprintf(msg, "[%s] Device #%d: Specified incorrect CanGw block index (%d). Must be from range [0, %d].", PSMCU_LIST_SECTION, devIndex, CFG_PSMCU_BLOCKS_IDS[devIndex], CFG_CANGW_BLOCKS_NUM-1);
+		sprintf(
+			msg,
+			"[%s] Device #%d: Specified incorrect CanGw block index (%d). Must be from range [0, %d].\nDevice specification: \"%s\"",
+			PSMCU_LIST_SECTION, devIndex, CFG_PSMCU_BLOCKS_IDS[devIndex], CFG_CANGW_BLOCKS_NUM-1, specsString
+		);
 		return -1;		
 	}
 	
 	if (CFG_PSMCU_DEVICES_IDS[devIndex] <= 0 || CFG_PSMCU_DEVICES_IDS[devIndex] > 0xFF) {
-		sprintf(msg, "[%s] Device #%d: Specified incorrect Device ID (hex) 0x%X. Must be from range [0x01, 0xFF].", PSMCU_LIST_SECTION, devIndex, CFG_PSMCU_DEVICES_IDS[devIndex]);
+		sprintf(
+			msg,
+			"[%s] Device #%d: Specified incorrect Device ID (hex) 0x%X. Must be from range [0x01, 0xFF].\nDevice specification: \"%s\"",
+			PSMCU_LIST_SECTION, devIndex, CFG_PSMCU_DEVICES_IDS[devIndex], specsString
+		);
 		return -1;
 	}
 	
-	strcpy(CFG_PSMCU_DEVICES_NAMES[devIndex], &specsString[strPos]);
+    // Skipping all the white spaces
+	name_start = &specsString[strPos];
+	while ((*name_start==' ') || (*name_start=='\t')) name_start++;
+	
+	// trying to find a separator for the device type specification
+	type_separator = strstr(name_start, ">>");
+	if (type_separator) {
+		// Copy device name
+		memcpy(CFG_PSMCU_DEVICES_NAMES[devIndex], name_start, type_separator - name_start);
+		CFG_PSMCU_DEVICES_NAMES[devIndex][type_separator - name_start] = 0;  // Put a zero-termination character.
+		
+		// Extract device type
+		type_start = type_separator + 2;
+		// Remove leading spaces
+		while ((*type_start==' ') || (*type_start=='\t')) type_start++;
+		
+		strcpy(type_name, type_start);
+		removeNameTrailingSpaces(type_name);
+		
+		if (strlen(type_name) == 0) {
+			sprintf(
+				msg,
+				"[%s] Device #%d: Specified empty device type.\nDevice specification: \"%s\"",
+				PSMCU_LIST_SECTION, devIndex, specsString
+			);
+			return -1;	
+		}
+	
+		// Check that device type is registerd in the configuration file.
+		
+		if (!cfgDeviceTypeSettingsGet(type_name)) {
+			sprintf(
+				msg,
+				"[%s] Device #%d: Unexpected device type \"%s\". Check that this device type is specified in the section \"%s\"\nDevice specification: \"%s\"",
+				PSMCU_LIST_SECTION, devIndex, type_name, PSMCU_TYPES, specsString
+			);
+			return -1;		
+		}
+		
+		// Copy the device type name to the configuration
+	    strcpy(CFG_PSMCU_DEVICES_TYPES[devIndex], type_name);	
+		
+	} else {
+		strcpy(CFG_PSMCU_DEVICES_NAMES[devIndex], name_start);
+		
+		// Set the empty string to the device type, indicating that the default device tpye setting should be used.
+		strcpy(CFG_PSMCU_DEVICES_TYPES[devIndex], "");
+	}
+
+	removeNameTrailingSpaces(CFG_PSMCU_DEVICES_NAMES[devIndex]);
 	if (strlen(CFG_PSMCU_DEVICES_NAMES[devIndex]) < 1) {
-		sprintf(msg, "[%s] Device #%d: The device name cannot be an empty string.", PSMCU_LIST_SECTION, devIndex);
+		sprintf(
+			msg,
+			"[%s] Device #%d: The device name cannot be an empty string.\nDevice specification: \"%s\"",
+			PSMCU_LIST_SECTION, devIndex, specsString
+		);
 		return -1;
 	}
 	
@@ -253,7 +332,7 @@ void InitServerConfig(char * configPath) {
 		}
 
 		READ_STRING(PSMCU_LIST_SECTION, key, subParsingStr);
-		if (readDeviceAddrAndName(devIndex, subParsingStr, msg) < 0) {INFORM_AND_STOP(msg);}
+		if (readDeviceInfo(devIndex, subParsingStr, msg) < 0) {INFORM_AND_STOP(msg);}
 	}
 	
 	READ_INT(PSMCU_SECTION, "DowntimeLimit", CFG_PSMCU_DEVICE_DOWNTIME_LIMIT);  // Device response timeout 
@@ -346,7 +425,6 @@ void InitServerConfig(char * configPath) {
 	
 	////////////////////////////////////////////////////////
 	Ini_Dispose(iniText);
-	cfgReleaseDeviceTypeSettings();
 }
 
 
@@ -375,9 +453,12 @@ deviceTypeSettings * cfgDeviceTypeSettingsGetDefault(void) {
 
 
 deviceTypeSettings * cfgDeviceTypeSettingsGet(char * type) {
+	void * settings;
     if (!deviceTypeSettingsInitialized) return 0;
 	
-	return map_get(&deviceTypeSettingsMap, type);
+	settings = map_get(&deviceTypeSettingsMap, type);
+	if (!settings) return defaultDeviceTypeSettings;
+	return settings;
 }
 
 
@@ -388,7 +469,6 @@ void printSettings(const char *name, deviceTypeSettings* settings) {
 
 void printDeviceTypeSettings(void) {
 	map_iter_t iterator;
-	map_node_t *node;
 	if (!deviceTypeSettingsInitialized) {
 		printf("Unable to print device type settings. Not initialized.\n");
 		return;

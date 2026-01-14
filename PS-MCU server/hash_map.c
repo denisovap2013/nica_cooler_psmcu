@@ -219,3 +219,12 @@ const char *map_next_(map_base_t *m, map_iter_t *iter) {
   }
   return (char*) (iter->node + 1);
 }
+
+const char * map_get_node_key(const map_node_t *node) {
+    return node->key;	
+}
+
+
+const void * map_get_node_value(const map_node_t *node) {
+	return node->value;	
+}

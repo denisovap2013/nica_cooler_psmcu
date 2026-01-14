@@ -78,6 +78,9 @@ void map_remove_(map_base_t *m, const char *key);
 map_iter_t map_iter_(void);
 const char *map_next_(map_base_t *m, map_iter_t *iter);
 
+const char * map_get_node_key(const map_node_t *node);
+const void * map_get_node_value(const map_node_t *node);
+
 
 typedef map_t(void*) map_void_t;
 typedef map_t(char*) map_str_t;

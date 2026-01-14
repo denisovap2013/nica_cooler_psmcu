@@ -1,6 +1,7 @@
 #include "inifile.h"
 #include "ServerConfigData.h" 
-#include "psMcuProtocol.h"  
+#include "psMcuProtocol.h"
+#include "hash_map.h"
 
 //==============================================================================
 // Server general parameters
@@ -59,6 +60,15 @@ int		CFG_FILE_DATA_WRITE_INTERVAL;  // seconds
 int 	CFG_FILE_EXPIRATION;
 
 
+// Device type settings
+int deviceTypeSettingsInitialized = 0;
+typedef map_t(deviceTypeSettings) map_settings;
+map_settings deviceTypeSettingsMap;
+deviceTypeSettings * defaultDeviceTypeSettings = 0;
+
+// End of Device type settings
+
+
 #define GENERAL_SECTION "GENERAL" 
 #define FILE_SECTION "FILE"
 #define TCP_SECTION "TCP"
@@ -67,6 +77,9 @@ int 	CFG_FILE_EXPIRATION;
 #define PSMCU_LIST_SECTION "PSMCU-LIST"  
 #define PSMCU_DEFAULTS_SECTION "PSMCU_DEFAULT" 
 #define PSMCU_SPECIFIC_SECTION "PSMCU_SPECIFIC"
+#define PSMCU_TYPE_SETTINGS_DEFAULT "PSMCU-TYPE-SETTINGS-default"
+#define PSMCU_TYPES "PSMCU-TYPES"
+
 
 void _getDeviceIndexErrMsg(int index, int itemsNumber, char *tagName, char *msg) {
 	char indicesOrder[128];
@@ -119,8 +132,10 @@ int readDeviceAddrAndName(int devIndex, char *specsString, char *msg) {
 void InitServerConfig(char * configPath) {
 	int cgwIndex, devIndex, chIndex;
 	
-	char key[256], msg[256], subParsingStr[256], sectionName[256];
+	char key[256], msg[256], subParsingStr[1024], sectionName[256];
+	char * token;
 	IniText iniText;
+	deviceTypeSettings settingsOverride;
 	
 	char *tagName;
 	
@@ -140,7 +155,7 @@ void InitServerConfig(char * configPath) {
 	double  cfg_default_adc_max_curr;
 	double  cfg_default_adc_safe_curr;
 	
-	#define INFORM_AND_STOP(msg) MessagePopup("Configuration Error", (msg)); Ini_Dispose(iniText); exit(0);   
+	#define INFORM_AND_STOP(msg) MessagePopup("Configuration Error", (msg)); Ini_Dispose(iniText); cfgReleaseDeviceTypeSettings(); exit(0);   
 	#define STOP_CONFIGURATION(s, k) sprintf(msg, "Cannot read '%s' from the '%s' section. (Line: %d)", (k), (s), Ini_LineOfLastAccess(iniText)); INFORM_AND_STOP(msg);
     #define READ_STRING(s, k, var) if(Ini_GetStringIntoBuffer(iniText, (s), (k), (var), sizeof((var))) <= 0) {STOP_CONFIGURATION((s), (k));} 
     #define READ_INT(s, k, var) if(Ini_GetInt(iniText, (s), (k), &(var)) <= 0) {STOP_CONFIGURATION((s), (k));}
@@ -201,6 +216,29 @@ void InitServerConfig(char * configPath) {
 		READ_INT_OR_DEFAULT(sectionName, "sendTimeout", CFG_CANGW_SEND_TIMEOUT[cgwIndex], CFG_CANGW_DEFAULT_SEND_TIMEOUT);
 	}
 
+	////////////////////////////////////////////////////
+	// PSMCU-TYPE-SETTINGS-default //
+	cfgInitDeviceTypeSettings();
+	READ_DOUBLE(PSMCU_TYPE_SETTINGS_DEFAULT, "contactor_delay", defaultDeviceTypeSettings->contactor_delay);
+	
+	// PSMCU-TYPES
+	// Read available types;
+	READ_STRING(PSMCU_TYPES, "types", subParsingStr);
+	
+	// Iterate over available types and check the corresponding sections for settings override.
+	for (token = strtok(subParsingStr," ,"); token != NULL; token = strtok(NULL, " ,")) {
+		// Check the length of the type
+		if (strlen(token) + 1 >= CFG_MAX_TYPE_LEN) {
+			sprintf(msg, "Max length of the device type name must be %d, got %d symbols for a device type \"%s\"", CFG_MAX_TYPE_LEN-1, strlen(token), token);
+			INFORM_AND_STOP(msg);
+		}
+		// Copy default settings
+		memcpy(&settingsOverride, defaultDeviceTypeSettings, sizeof(deviceTypeSettings));
+		sprintf(sectionName, "PSMCU-TYPE-SETTINGS-%s", token);
+		READ_DOUBLE_OR_DEFAULT(sectionName, "contactor_delay", settingsOverride.contactor_delay, defaultDeviceTypeSettings->contactor_delay);
+		map_set(&deviceTypeSettingsMap, token, settingsOverride);  
+	}
+	
 	////////////////////////////////////////////////////
 	// PSMCU //
 	CFG_PSMCU_DEVICES_NUM = Ini_NumberOfItems(iniText, PSMCU_LIST_SECTION);
@@ -308,4 +346,59 @@ void InitServerConfig(char * configPath) {
 	
 	////////////////////////////////////////////////////////
 	Ini_Dispose(iniText);
+	cfgReleaseDeviceTypeSettings();
+}
+
+
+void cfgInitDeviceTypeSettings(void) {
+    if (deviceTypeSettingsInitialized) return;
+
+	map_init(&deviceTypeSettingsMap);
+	defaultDeviceTypeSettings = malloc(sizeof(deviceTypeSettings));
+	deviceTypeSettingsInitialized = 1;
+}
+
+
+void cfgReleaseDeviceTypeSettings(void) {
+    if (!deviceTypeSettingsInitialized) return;
+	
+	map_deinit(&deviceTypeSettingsMap);
+	free(defaultDeviceTypeSettings);
+	defaultDeviceTypeSettings = 0;
+	deviceTypeSettingsInitialized = 0;
+}
+
+
+deviceTypeSettings * cfgDeviceTypeSettingsGetDefault(void) {
+    return defaultDeviceTypeSettings;	
+}
+
+
+deviceTypeSettings * cfgDeviceTypeSettingsGet(char * type) {
+    if (!deviceTypeSettingsInitialized) return 0;
+	
+	return map_get(&deviceTypeSettingsMap, type);
+}
+
+
+// Helper functions for printing settings for the device types
+void printSettings(const char *name, deviceTypeSettings* settings) {
+    printf("\"%s\": %lf\n", name, settings->contactor_delay); 	
+}
+
+void printDeviceTypeSettings(void) {
+	map_iter_t iterator;
+	map_node_t *node;
+	if (!deviceTypeSettingsInitialized) {
+		printf("Unable to print device type settings. Not initialized.\n");
+		return;
+	}
+	
+	printf("Device type settings:\n");
+	printSettings("default", cfgDeviceTypeSettingsGetDefault());
+
+	iterator = map_iter(&deviceTypeSettingsMap);
+	while (map_next(&deviceTypeSettingsMap, &iterator)) {
+		printSettings(map_get_node_key(iterator.node), (deviceTypeSettings*)map_get_node_value(iterator.node));
+	}
 }

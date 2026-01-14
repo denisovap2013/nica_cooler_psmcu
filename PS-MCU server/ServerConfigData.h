@@ -70,7 +70,22 @@ extern int		CFG_FILE_DATA_WRITE_INTERVAL; //seconds
 extern int 		CFG_FILE_EXPIRATION;	// days
 
 void InitServerConfig(char * configPath);
-		
+
+
+// Device type settings
+typedef struct deviceTypeSettings_t {
+	double contactor_delay;
+} deviceTypeSettings;
+
+void cfgInitDeviceTypeSettings(void);
+void cfgReleaseDeviceTypeSettings(void);
+deviceTypeSettings * cfgDeviceTypeSettingsGetDefault(void);
+deviceTypeSettings * cfgDeviceTypeSettingsGet(char * type);
+
+// Auxiliary function for printing device type settings
+void printDeviceTypeSettings(void);
+
+
 //==============================================================================  		
 
 

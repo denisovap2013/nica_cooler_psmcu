@@ -89,6 +89,8 @@ int cgwPsMcu_RegisterDevice(cgw_devices_t * devKit,
 	deviceInfo->globalDeviceIndex = globalDeviceIndex;
 	deviceInfo->cgwIndex = cgwIndex;
 	deviceInfo->p_devKit = devKit;
+
+	deviceInfo->contactorDelay = contactorDelay;
 	
 	deviceInfo->localIndex = cgwRegisterDevice(devKit, deviceID, deviceInfo, deviceInfo->deviceName, 
 											   cgwPsMcu_MessageHook, userHookFunc, deviceDowntimeLimit, 
@@ -121,6 +123,7 @@ void cgwPsMcu_updateCallback(void * parameters) {
 				max_code_step = psmcuParams->maxDACcodeStep;
 				
 				if (current_code == target_code) {
+					// Reached the target, and the automatic update can be disabled
 					psmcuParams->usingDACslowMode[chIndex] = 0;		
 				} else {
 					if (target_code > current_code) {

@@ -21,6 +21,7 @@
 #include "CGW_PSMCU_Interface.h" 
 
 #include "ServerData.h"
+#include "Logging.h"
 
 //==============================================================================
 // Constants
@@ -52,8 +53,183 @@ int controlAllSetSingleOutputBit(int cgwIndex, int bit, unsigned char value);
 //==============================================================================
 // Global variables
 
+// Initialization parameters
+int serverDataInitialized = 0;
+contactorControlInfo_t contactor_control;;  
+
 //==============================================================================
 // Global functions
+
+///////////////////////////////////
+///////////////////////////////////
+// Queues
+///////////////////////////////////
+///////////////////////////////////
+
+int _queueRemoveItem(deviceQueue_t * queue, deviceQueueItem_t *elementToDelete) {
+    deviceQueueItem_t * item;
+	
+	// Check that it is in queue
+	if (!queue->start) return 0;
+	
+    item = queue->start;
+	while (item) {
+		if (item == elementToDelete) {
+			
+			// Update the pointer to the start of the queue if necessary..
+			if (item == queue->start) queue->start = item->next;
+			
+			// Update the pointer to the end of the queue if necessary
+			if (item == queue->end) queue->end = item->prev;
+			
+			if (item->prev) item->prev->next = item->next;
+			if (item->next) item->next->prev = item->prev;
+			
+			free(item);
+			
+			queue->length--;
+			return 1;
+		}
+		
+        // Go to the next element in the queue
+	    item = item->next;	
+	}
+	return 0;
+}
+
+
+int _idPairsEqual(deviceIdPair_t id_1, deviceIdPair_t id_2) {
+    if ((id_1.cgwIndex == id_2.cgwIndex) && (id_1.deviceId == id_2.deviceId)) return 1;
+	return 0;
+}
+
+void _initQueue(deviceQueue_t * queue) {
+    queue->length = 0;
+	queue->start = 0;
+	queue->end = 0;
+}
+
+void _clearQueue(deviceQueue_t * queue) {
+	deviceQueueItem_t *item, *next_item;
+	
+	item = queue->start;
+
+	while(item) {
+	    next_item = item->next;
+		free(item);
+		item = next_item;
+	}
+	
+	queue->length = 0;
+	queue->start = 0;
+	queue->end = 0;
+}
+
+
+int _queueRemoveItemById(deviceQueue_t * queue, deviceIdPair_t deviceIdPair) {
+    deviceQueueItem_t * item, *next_item;
+	int deletedElementsNum;
+	
+	// Check that it is in queue
+	if (!queue->start) return 0;
+	
+    item = queue->start;
+	
+	deletedElementsNum = 0;
+	while (item) {
+		next_item = item->next; 
+
+		if (_idPairsEqual(item->deviceIdPair, deviceIdPair)) {
+			
+			// Update the pointer to the start of the queue if necessary..
+			if (item == queue->start) queue->start = item->next;
+			
+			// Update the pointer to the end of the queue if necessary
+			if (item == queue->end) queue->end = item->prev;
+			
+			if (item->prev) item->prev->next = item->next;
+			if (item->next) item->next->prev = item->prev;
+			
+			deletedElementsNum += 1;
+			free(item);
+			
+		}
+		
+        // Go to the next element in the queue
+	    item = next_item;	
+	}
+	queue->length -= deletedElementsNum;
+	return deletedElementsNum;
+}
+
+
+int queueGet(deviceQueue_t * queue, deviceIdPair_t * deviceIdPair) {
+	deviceQueueItem_t *item;
+
+    if (!queue->start) return 0;
+    
+	item = queue->start;
+	(*deviceIdPair) = item->deviceIdPair;
+	
+	// Could use _queueRemoveItem(), but decided to use more optimized approach (do not need to find an element to delete.
+	if (queue->start->next) queue->start->next->prev = 0;
+	queue->start = queue->start->next;
+	
+	if (!queue->start) queue->end = 0;  // No more elements in the queue
+	free(item);
+	
+	queue->length--;
+	
+	return 1;
+}
+
+
+int queueAdd(deviceQueue_t * queue, deviceIdPair_t deviceIdPair) {
+	deviceQueueItem_t *item;
+	
+	item = malloc(sizeof(deviceQueueItem_t));
+	item->deviceIdPair = deviceIdPair;
+	item->next = 0;
+	item->prev = queue->end;
+
+	queue->length++;
+
+    if (!queue->end) {
+	    // Create pointers to the start and end elements in the queue.
+		queue->start = item;
+		queue->end = item;
+	} else {
+		// Add element to the end of the queue
+	    queue->end->next = item;
+		queue->end = item;
+	}
+	
+	return 1;
+}
+
+
+int queueHasElement(deviceQueue_t * queue, deviceIdPair_t deviceIdPair) {
+	deviceQueueItem_t *item;   
+	
+	item = queue->start;
+	
+	while(item) {
+		if (_idPairsEqual(item->deviceIdPair, deviceIdPair)) return 1;
+		item = item->next;
+	}
+	
+    return 0;	
+}
+
+int queueRemove(deviceQueue_t * queue, deviceIdPair_t deviceIdPair) {
+    return _queueRemoveItemById(queue, deviceIdPair);	
+}
+
+///////////////////////////////////
+///////////////////////////////////
+// Device functions    
+///////////////////////////////////
+///////////////////////////////////
 
 int deviceIndexToDeviceId(int globalDeviceIndex, int *cgwIndex, int *deviceId) {
 	if (globalDeviceIndex < 0 || globalDeviceIndex >= CFG_PSMCU_DEVICES_NUM) return -1;
@@ -275,6 +451,10 @@ char * getDeviceNamePtr(int cgwIndex, int deviceId) {
 	return ((cgwPsMcu_Information_t*)deviceKit[cgwIndex].parameters[deviceId])->deviceName;
 }
 
+cgwPsMcu_Information_t * getDevicePatameters(int cgwIndex, int deviceId) {
+    return deviceKit[cgwIndex].parameters[deviceId];	
+}
+
 
 int setAllDacToZero(int cgwIndex) {
 	int deviceIndex, deviceId;
@@ -291,6 +471,9 @@ int setAllDacToZero(int cgwIndex) {
 
 
 int controlSingleForceOn(int cgwIndex, int deviceId) {
+	// DO NOT CALL THIS FUNCTION DIRECTLY.
+	// Use the processNextForceOn() to handle the necessary delays between calls.
+	
 	// Check the Current Permission is set to 0
 	cgwPsMcu_Information_t *parameters;
 	
@@ -299,14 +482,121 @@ int controlSingleForceOn(int cgwIndex, int deviceId) {
 	parameters = deviceKit[cgwIndex].parameters[deviceId];
 	
 	// If the Current permission is ON, unable to set the Force permission to 1 (incorrect order) 
-	if ((parameters->OutputRegisterData >> 1) & 1) return 0;
+	if ((parameters->OutputRegisterData >> 1) & 1) {
+		logMessage("[SERVER] The current permission is ON for the device \"%s\". Unable to the the Force permission to 1.",
+			getDeviceNamePtr(cgwIndex, deviceId));
+		return -1;
+	}
 
 	return controlSingleSetSingleOutputBit(cgwIndex, deviceId, 2, 1);	
 }
 
 
+int controlScheduleSingleForceOn(int cgwIndex, int deviceId) {
+	cgwPsMcu_Information_t *parameters;
+	deviceIdPair_t deviceIdPair;
+
+	CHECK_DEVICE_ID(deviceId, deviceKit[cgwIndex]); 
+	
+	parameters = deviceKit[cgwIndex].parameters[deviceId]; 
+	
+    // Check the current Force permission state first, if it is even necessary to process
+	// the set the Force permision to 1.
+	if ((parameters->OutputRegisterData >> 2) & 1) return 0;
+	
+	// If the Current permission is ON, unable to set the Force permission to 1 (incorrect order) 
+	if ((parameters->OutputRegisterData >> 1) & 1) return 0;
+
+	// Add the specified device to thew queue for switching on contactors.
+	deviceIdPair.cgwIndex = cgwIndex;
+	deviceIdPair.deviceId = deviceId;
+	
+	if (queueHasElement(&contactor_control.switch_queue, deviceIdPair)) {
+	    logMessage("[SERVER] Tried to switch the contactor on for the device \"%s\" while already wating for it.",
+			getDeviceNamePtr(cgwIndex, deviceId));	
+	} else {
+	    queueAdd(&contactor_control.switch_queue, deviceIdPair);
+	}
+	
+	while(processNextForceOn()) {/*If function returns 1, it means the next element in the queue can be processed immediately.*/}
+	
+	return 0;
+}
+
+int processNextForceOn(void) {
+	/*
+	  Returns:
+	  
+	    0 - unable to set
+	*/
+	
+	time_t current_time;  
+	deviceIdPair_t deviceIdPair;
+
+	if (!serverDataInitialized) {
+		logMessage("[CODE] Tried to proces the contactor swtich-on queue. However, server data is not initinalized.");
+		return 0;
+	}
+	
+	time(&current_time);
+	
+	if (current_time - contactor_control.lastContactorUpdate < contactor_control.lastSetDelay)
+		return 0;  // It is still not allowed to switch on the contactor for another device.
+	
+	if (!contactor_control.switch_queue.length) {
+		// Nothing to process
+		// (reset the update info)
+		contactor_control.lastContactorUpdate = 0;
+		contactor_control.lastSetDelay = 0;
+		return 0;
+	}
+	
+	if (!queueGet(&contactor_control.switch_queue, &deviceIdPair)) {
+	    logMessage("[CODE] Unable to get the device ID from the contactor switch queue.");  
+		return 0;	
+	}
+	
+	if (controlSingleForceOn(deviceIdPair.cgwIndex, deviceIdPair.deviceId) < 0) {
+	    // Setting the Force permission to 1 did not work.
+		// Set the delay to zero to allow immediate switching of the next contactor.
+		contactor_control.lastContactorUpdate = 0;
+		contactor_control.lastSetDelay = 0;
+		return 1;
+	}
+	
+	contactor_control.lastContactorUpdate = current_time;
+	contactor_control.lastSetDelay = getDevicePatameters(deviceIdPair.cgwIndex, deviceIdPair.deviceId)->contactorDelay;
+	
+	if (contactor_control.lastSetDelay == 0) {
+		logMessage("[SERVER] Delay is not set fo this device's contactor. Proceeding to the next element in the queue.");
+		contactor_control.lastContactorUpdate = 0;
+	    contactor_control.lastSetDelay = 0;
+		return 1;
+	}
+	
+	logMessage(
+		"[SERVER] Waiting for %lf.2 seconds before the next contactor of other devices can be turned on.",
+		contactor_control.lastSetDelay);	
+	
+	return 0;
+}
+
+
 int controlSingleForceOff(int cgwIndex, int deviceId) {
 	// No bits check is necessary  
+	
+	cgwPsMcu_Information_t *parameters;
+	deviceIdPair_t deviceIdPair; 
+
+	CHECK_DEVICE_ID(deviceId, deviceKit[cgwIndex]); 
+	
+	parameters = deviceKit[cgwIndex].parameters[deviceId]; 
+	
+	// Remove the device from the queue for switching the contactor ON, if it was in the queue.
+	deviceIdPair.cgwIndex = cgwIndex;
+	deviceIdPair.deviceId = deviceId;
+	queueRemove(&contactor_control.switch_queue, deviceIdPair);
+
 	return controlSingleSetSingleOutputBit(cgwIndex, deviceId, 2, 0);	
 }
 
@@ -452,3 +742,31 @@ int clearAllErrorState(int cgwIndex) {
 	
 	return 0;	
 }
+
+// Initialization
+void InitServerData(void) {
+	if (serverDataInitialized) {
+		logMessage("[CODE] attempted to initialize the server data twice.");
+		return;
+	}
+
+	contactor_control.lastContactorUpdate = 0;
+	contactor_control.lastSetDelay = 0;
+	
+	// Initializing a queue for the 
+	_initQueue(&contactor_control.switch_queue);
+
+    serverDataInitialized = 1;
+	logMessage("[SERVER] Server data and states are initialized.");
+}
+
+
+void ReleaseServerData(void) {
+	if (!serverDataInitialized) return;
+	
+	_clearQueue(&contactor_control.switch_queue);
+
+	serverDataInitialized = 0;
+	logMessage("[SERVER] Server data and states are freed.");	
+}
+

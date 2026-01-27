@@ -79,7 +79,7 @@ void DiscardAllResources(void) {
 		UnregisterTCPServer(CFG_TCP_PORT);
 		tcpSI.initialized = 0;
 	}
-		
+	ReleaseServerData();	
 	ReleaseCommandParsers();
 	cfgReleaseDeviceTypeSettings();
 	msReleaseGlobalStack();
@@ -158,6 +158,8 @@ void bgdFunc(void)
 	processUserInput();
 	
 	processScheduleEvents();
+	
+	processNextForceOn();
 	
 	for (cgwIndex=0; cgwIndex < CFG_CANGW_BLOCKS_NUM; cgwIndex++) {
 		if (!cgwConnectionBroken[cgwIndex]) updateDevicesDownTime(&deviceKit[cgwIndex]);
@@ -503,6 +505,7 @@ int main(int argc, char **argv) {
 	tcpConnection_SetBackgroundFunction(&tcpSI, bgdFunc);
 	tcpConnection_SetDataExchangeFunction(&tcpSI, dataExchFunc);
 	
+	InitServerData();
 	register_devices();
 	cgwInitializeGlobals();
 	InitCommandParsers();

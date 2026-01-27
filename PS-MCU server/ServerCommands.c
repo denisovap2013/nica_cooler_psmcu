@@ -443,9 +443,9 @@ int cmdParserSingleForceOn(char *commandBody, char *answerBuffer, char *ip) {
 	
 	if (sscanf(commandBody, "%d", &deviceIndex) != 1) return -1;
 	if (deviceIndexToDeviceId(deviceIndex, &cgwIndex, &deviceId) < 0) return -1;
-	if (controlSingleForceOn(cgwIndex, deviceId) < 0) return -1; 
-
-	logNotification(ip, "Block %d, deviceID 0x%X - Single Force ON", cgwIndex, deviceId); 
+	
+	if (controlScheduleSingleForceOn(cgwIndex, deviceId) < 0) return -1;   
+	logNotification(ip, "Block %d, deviceID 0x%X - Single Force ON", cgwIndex, deviceId);
 	
 	return 1;
 }

@@ -375,10 +375,10 @@ int cmdParserSingleAdcReset(char *commandBody, char *answerBuffer, char *ip) {
 	int deviceIndex, cgwIndex, deviceId; 
 	
 	if (sscanf(commandBody, "%d", &deviceIndex) != 1) return -1;
-	if (deviceIndexToDeviceId(deviceIndex, &cgwIndex, &deviceId) < 0) return -1; 
-	if (resetSingleAdcMeasurements(cgwIndex, deviceId) < 0) return -1; 
+	if (deviceIndexToDeviceId(deviceIndex, &cgwIndex, &deviceId) < 0) return -1;
 	
-	logNotification(ip, "Block %d, deviceID 0x%X - Single ADC RESET", cgwIndex, deviceId); 
+	logNotification(ip, "Block %d, deviceID 0x%X - Single ADC RESET", cgwIndex, deviceId);
+	if (resetSingleAdcMeasurements(cgwIndex, deviceId) < 0) return -1; 
 	
 	return 1;
 }
@@ -404,9 +404,9 @@ int cmdParserSingleOutRegistersSet(char *commandBody, char *answerBuffer, char *
 	
 	if (sscanf(commandBody, "%d %X %X", &deviceIndex, &registers, &mask) != 3) return -1;
 	if (deviceIndexToDeviceId(deviceIndex, &cgwIndex, &deviceId) < 0) return -1;
+	
+	logNotification(ip, "Block %d, deviceID 0x%X - Single Registers SET to 0x%X (mask 0x%X)", cgwIndex, deviceId);
 	if (setOutputRegisters(cgwIndex, deviceId, registers, mask) < 0) return -1;
-
-	logNotification(ip, "Block %d, deviceID 0x%X - Single Registers SET to 0x%X (mask 0x%X)", cgwIndex, deviceId); 
 	
 	return 1;
 }
@@ -417,9 +417,9 @@ int cmdParserSingleInterlockRestore(char *commandBody, char *answerBuffer, char 
 	
 	if (sscanf(commandBody, "%d", &deviceIndex) != 1) return -1;
 	if (deviceIndexToDeviceId(deviceIndex, &cgwIndex, &deviceId) < 0) return -1; 
+	
+	logNotification(ip, "Block %d, deviceID 0x%X - Single Force RESTORE", cgwIndex, deviceId); 
 	if (controlSingleInterlockRestore(cgwIndex, deviceId) < 0) return -1;
-
-	logNotification(ip, "Block %d, deviceID 0x%X - Single Force RESTORE", cgwIndex, deviceId);
 	
 	return 1;
 }
@@ -430,9 +430,9 @@ int cmdParserSingleInterlockDrop(char *commandBody, char *answerBuffer, char *ip
 	
 	if (sscanf(commandBody, "%d", &deviceIndex) != 1) return -1;
 	if (deviceIndexToDeviceId(deviceIndex, &cgwIndex, &deviceId) < 0) return -1;
+	
+	logNotification(ip, "Block %d, deviceID 0x%X - Single Force DROP", cgwIndex, deviceId);
 	if (controlSingleInterlockDrop(cgwIndex, deviceId) < 0) return -1; 
-
-	logNotification(ip, "Block %d, deviceID 0x%X - Single Force DROP", cgwIndex, deviceId); 
 	
 	return 1;
 }
@@ -444,8 +444,8 @@ int cmdParserSingleForceOn(char *commandBody, char *answerBuffer, char *ip) {
 	if (sscanf(commandBody, "%d", &deviceIndex) != 1) return -1;
 	if (deviceIndexToDeviceId(deviceIndex, &cgwIndex, &deviceId) < 0) return -1;
 	
-	if (controlScheduleSingleForceOn(cgwIndex, deviceId) < 0) return -1;   
 	logNotification(ip, "Block %d, deviceID 0x%X - Single Force ON", cgwIndex, deviceId);
+	if (controlScheduleSingleForceOn(cgwIndex, deviceId) < 0) return -1;   
 	
 	return 1;
 }
@@ -456,9 +456,9 @@ int cmdParserSingleForceOff(char *commandBody, char *answerBuffer, char *ip) {
 	
 	if (sscanf(commandBody, "%d", &deviceIndex) != 1) return -1;
 	if (deviceIndexToDeviceId(deviceIndex, &cgwIndex, &deviceId) < 0) return -1;
-	if (controlSingleForceOff(cgwIndex, deviceId) < 0) return -1;
 	
-	logNotification(ip, "Block %d, deviceID 0x%X - Single Force OFF", cgwIndex, deviceId);
+	logNotification(ip, "Block %d, deviceID 0x%X - Single Force OFF", cgwIndex, deviceId);   
+	if (controlSingleForceOff(cgwIndex, deviceId) < 0) return -1;
 	
 	return 1;
 }
@@ -469,9 +469,9 @@ int cmdParserSinglePermissionOn(char *commandBody, char *answerBuffer, char *ip)
 	
 	if (sscanf(commandBody, "%d", &deviceIndex) != 1) return -1;
 	if (deviceIndexToDeviceId(deviceIndex, &cgwIndex, &deviceId) < 0) return -1;
-	if (controlSinglePermissionOn(cgwIndex, deviceId) < 0) return -1;
 	
-	logNotification(ip, "Block %d, deviceID 0x%X - Single Current Permission ON", cgwIndex, deviceId); 
+	logNotification(ip, "Block %d, deviceID 0x%X - Single Current Permission ON", cgwIndex, deviceId);
+	if (controlSinglePermissionOn(cgwIndex, deviceId) < 0) return -1;
 	
 	return 1;
 }
@@ -482,9 +482,9 @@ int cmdParserSinglePermissionOff(char *commandBody, char *answerBuffer, char *ip
 	
 	if (sscanf(commandBody, "%d", &deviceIndex) != 1) return -1;
 	if (deviceIndexToDeviceId(deviceIndex, &cgwIndex, &deviceId) < 0) return -1;
-	if (controlSinglePermissionOff(cgwIndex, deviceId) < 0) return -1; 
 	
 	logNotification(ip, "Block %d, deviceID 0x%X - Single Current Permission OFF", cgwIndex, deviceId);
+	if (controlSinglePermissionOff(cgwIndex, deviceId) < 0) return -1; 
 	
 	return 1;
 }
@@ -567,11 +567,11 @@ int cmdParserSingleOutRegNameGet(char *commandBody, char *answerBuffer, char *ip
 
 int cmdParserAllAdcReset(char *commandBody, char *answerBuffer, char *ip) {
 	int cgwIndex;
+	
+	logNotification(ip, "All ADC RESET");
 	for (cgwIndex=0; cgwIndex < CFG_CANGW_BLOCKS_NUM; cgwIndex++) {
 		if (resetAllAdcMeasurements(cgwIndex) < 0) return -1;  
 	}
-	
-	logNotification(ip, "All ADC RESET");  
 	
 	return 1;
 }
@@ -579,11 +579,10 @@ int cmdParserAllAdcReset(char *commandBody, char *answerBuffer, char *ip) {
 
 int cmdParserAllForceOff(char *commandBody, char *answerBuffer, char *ip) {
 	int cgwIndex;
-	for (cgwIndex=0; cgwIndex < CFG_CANGW_BLOCKS_NUM; cgwIndex++) {
-		if (controlAllForceOff(cgwIndex) < 0) return -1;  
-	}
 	
-	logNotification(ip, "All Force OFF");  
+	logNotification(ip, "All Force OFF");
+
+	if (controlAllForceOffAllCgw() < 0) return -1;
 	
 	return 1;
 }
@@ -591,11 +590,12 @@ int cmdParserAllForceOff(char *commandBody, char *answerBuffer, char *ip) {
 
 int cmdParserAllPermissionOff(char *commandBody, char *answerBuffer, char *ip) {
 	int cgwIndex;
+	
+	logNotification(ip, "All Current Permission OFF");
+
 	for (cgwIndex=0; cgwIndex < CFG_CANGW_BLOCKS_NUM; cgwIndex++) {
 		if (controlAllPermissionOff(cgwIndex) < 0) return -1;  
 	}
-
-	logNotification(ip, "All Current Permission OFF");
 	
 	return 1;
 }
@@ -603,6 +603,9 @@ int cmdParserAllPermissionOff(char *commandBody, char *answerBuffer, char *ip) {
 
 int cmdParserAllZeroDac(char *commandBody, char *answerBuffer, char *ip) {
 	int cgwIndex;
+	
+	logNotification(ip, "Set zero to all DAC"); 
+	
 	for (cgwIndex=0; cgwIndex < CFG_CANGW_BLOCKS_NUM; cgwIndex++) {
 		if (setAllDacToZero(cgwIndex) < 0) return -1;  
 	}

@@ -225,6 +225,16 @@ int queueRemove(deviceQueue_t * queue, deviceIdPair_t deviceIdPair) {
     return _queueRemoveItemById(queue, deviceIdPair);	
 }
 
+int queueClear(deviceQueue_t * queue) {
+    int items_num;
+	
+	items_num = queue->length;
+	
+	_clearQueue(queue);
+	
+	return items_num;
+}
+
 ///////////////////////////////////
 ///////////////////////////////////
 // Device functions    
@@ -534,7 +544,7 @@ int processNextForceOn(void) {
 	deviceIdPair_t deviceIdPair;
 
 	if (!serverDataInitialized) {
-		logMessage("[CODE] Tried to proces the contactor swtich-on queue. However, server data is not initinalized.");
+		logMessage("[CODE] Tried to process the contactor swtich-on queue. However, server data is not initinalized.");
 		return 0;
 	}
 	
@@ -575,7 +585,7 @@ int processNextForceOn(void) {
 	}
 	
 	logMessage(
-		"[SERVER] Waiting for %lf.2 seconds before the next contactor of other devices can be turned on.",
+		"[SERVER] Waiting for %.2lf seconds before the next contactor of another device can be turned on.",
 		contactor_control.lastSetDelay);	
 	
 	return 0;
@@ -593,9 +603,18 @@ int controlSingleForceOff(int cgwIndex, int deviceId) {
 	parameters = deviceKit[cgwIndex].parameters[deviceId]; 
 	
 	// Remove the device from the queue for switching the contactor ON, if it was in the queue.
-	deviceIdPair.cgwIndex = cgwIndex;
-	deviceIdPair.deviceId = deviceId;
-	queueRemove(&contactor_control.switch_queue, deviceIdPair);
+	
+	if (!serverDataInitialized) {
+		logMessage("[CODE] Tried to process the contactor swtich-off queue. However, server data is not initinalized.");
+	} else {
+		deviceIdPair.cgwIndex = cgwIndex;
+		deviceIdPair.deviceId = deviceId;
+		if (queueRemove(&contactor_control.switch_queue, deviceIdPair)) {
+		    logMessage("[SERVER] Force permission is set to 0 for the device \"%s\"."
+				" Removing it from the queue for switching on the contactor.",
+				getDeviceNamePtr(cgwIndex, deviceId));	
+		}
+	}
 
 	return controlSingleSetSingleOutputBit(cgwIndex, deviceId, 2, 0);	
 }
@@ -653,6 +672,26 @@ int controlSingleInterlockRestore(int cgwIndex, int deviceId) {
 	// No bits check is necessary
 	CHECK_DEVICE_ID(deviceId, deviceKit[cgwIndex]);
 	return controlSingleSetSingleOutputBit(cgwIndex, deviceId, 0, 0);	
+}
+
+
+int controlAllForceOffAllCgw(void) {
+	int cgwIndex;
+	int removed_from_queue_num;  
+	
+	if (!serverDataInitialized) {
+		logMessage("[CODE] Tried to process the contactor swtich-off queue. However, server data is not initinalized.");
+	} else {
+		removed_from_queue_num = queueClear(&contactor_control.switch_queue);
+	
+		logMessage("[SERVER] Force permission is set to 0 for all devices."
+		    " Removing %d the devices from the queue for switching on the contactors.",
+		    removed_from_queue_num);
+	}
+	
+	for (cgwIndex=0; cgwIndex < CFG_CANGW_BLOCKS_NUM; cgwIndex++) {
+		if (controlAllForceOff(cgwIndex) < 0) return -1;  
+	}
 }
 
 

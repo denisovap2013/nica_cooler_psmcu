@@ -54,6 +54,8 @@ typedef struct deviceQueue_t {
 int queueGet(deviceQueue_t * queue, deviceIdPair_t * deviceIdPair);
 int queueAdd(deviceQueue_t * queue, deviceIdPair_t deviceIdPair);
 int queueHasElement(deviceQueue_t * queue, deviceIdPair_t deviceIdPair);
+int queueRemove(deviceQueue_t * queue, deviceIdPair_t deviceIdPair);
+int queueClear(deviceQueue_t * queue);
 
 
 typedef struct contactorControlInfo_t {
@@ -104,6 +106,7 @@ int controlSinglePermissionOff(int cgwIndex, int deviceId);
 int controlSingleInterlockDrop(int cgwIndex, int deviceId);
 int controlSingleInterlockRestore(int cgwIndex, int deviceId);
 
+int controlAllForceOffAllCgw(void);
 int controlAllForceOff(int cgwIndex);
 int controlAllPermissionOff(int cgwIndex);
 
